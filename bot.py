@@ -40,7 +40,7 @@ current_shift = {"date": None, "bodies": []}
 last_driver_route = None
 current_order = {}
 
-# Диспетчер (для регистрации хендлеров через @dp.message)
+# Диспетчер
 dp = Dispatcher(storage=MemoryStorage())
 
 # Инициализация GitHub (опционально)
@@ -667,7 +667,7 @@ async def errors_handler(exception):
     return True
 
 
-async def on_startup(bot: Bot):
+async def on_startup(dispatcher):
     """При старте на Render — регистрируем вебхук в Telegram"""
     external_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
     hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
@@ -683,13 +683,13 @@ async def on_startup(bot: Bot):
     url = f"{external_url}{WEBHOOK_PATH}"
     
     try:
-        await bot.set_webhook(url=url, secret_token=secret)
+        await dispatcher.bot.set_webhook(url=url, secret_token=secret)
         logger.info(f"Webhook: {url}")
     except Exception as e:
         logger.error(f"Webhook error: {e}")
 
 
-async def on_shutdown(bot: Bot):
+async def on_shutdown(dispatcher):
     pass
 
 
@@ -713,7 +713,7 @@ def run_webhook():
     app.router.add_get("/health", health)
     app.router.add_get("/", health)
 
-    # Обработчик вебхука
+    # Обработчик вебхука — используем глобальный bot
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
     SimpleRequestHandler(
         dispatcher=dp,
