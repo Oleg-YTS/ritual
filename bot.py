@@ -507,7 +507,7 @@ async def errors_handler(e):
     logger.error(f"Error: {e}")
     return True
 
-async def on_startup(dp: Dispatcher):
+async def on_startup():
     url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
     host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
     if not url and host:
@@ -517,7 +517,7 @@ async def on_startup(dp: Dispatcher):
         return
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
     try:
-        await dp.bot.set_webhook(f"{url}{WEBHOOK_PATH}", secret_token=secret)
+        await bot.set_webhook(f"{url}{WEBHOOK_PATH}", secret_token=secret)
         logger.info(f"Webhook: {url}{WEBHOOK_PATH}")
     except Exception as e:
         logger.error(f"Webhook error: {e}")
