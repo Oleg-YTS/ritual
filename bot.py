@@ -60,7 +60,7 @@ if GITHUB_TOKEN and REPO_NAME:
 # ============================================================
 
 # Смена морга
-current_shift = {"date": None, "bodies": []}
+current_shift = {"location": None, "date": None, "bodies": []}
 last_driver_route = None
 
 # Текущий заказ (временный)
@@ -78,6 +78,7 @@ users_cache = {
 # ============================================================
 
 class Morg(StatesGroup):
+    location = State()  # Выбор морга
     surname = State()
     type = State()
     source = State()
@@ -86,6 +87,7 @@ class Morg(StatesGroup):
 
 # Общий стейт для ритуалок (и похороны, и кремация)
 class Ritual(StatesGroup):
+    event_date = State()  # Дата события (первое поле!)
     customer = State()
     phone = State()
     deceased = State()
@@ -99,6 +101,7 @@ class Ritual(StatesGroup):
     urn_type = State()    # Картон / Пластик
     urn_color = State()   # Если пластик
     extras = State()      # Доп. услуги (множественный выбор)
+    temple_cremation = State()  # Храм для кремации (без зала)
 
 # ============================================================
 # GITHUB ФУНКЦИИ
@@ -309,6 +312,12 @@ def type_kb():
         [InlineKeyboardButton(text="Не стандарт (10000₽)", callback_data="type_non")]
     ])
 
+def location_kb():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="loc_perv")],
+        [InlineKeyboardButton(text="🏥 Мира 11", callback_data="loc_mira")]
+    ])
+
 def source_kb():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Отделение", callback_data="src_dep")],
@@ -327,15 +336,31 @@ def pay_kb(bodies):
 # ХЕЛПЕРЫ ДЛЯ СООБЩЕНИЙ
 # ============================================================
 
+def main_kb_super_admin():
+    b = ReplyKeyboardBuilder()
+    b.row(KeyboardButton(text="🔄 Новая смена"), KeyboardButton(text="➕ Добавить тело"))
+    b.row(KeyboardButton(text="🔒 Подвести смену"), KeyboardButton(text="📋 Смена за сегодня"))
+    b.row(KeyboardButton(text="🕯️ Ритуал"))
+    b.row(KeyboardButton(text="🚕 Водителю"), KeyboardButton(text="📊 Отчёт"))
+    b.row(KeyboardButton(text="👥 Пользователи"))
+    return b.as_markup(resize_keyboard=True)
+
 def main_kb_manager():
     b = ReplyKeyboardBuilder()
     b.row(KeyboardButton(text="🔄 Новая смена"), KeyboardButton(text="➕ Добавить тело"))
-    b.row(KeyboardButton(text="🔒 Подвести смену"), KeyboardButton(text="🕯️ Ритуал"))
+    b.row(KeyboardButton(text="🔒 Подвести смену"), KeyboardButton(text="📋 Смена за сегодня"))
+    b.row(KeyboardButton(text="🕯️ Ритуал"))
     b.row(KeyboardButton(text="🚕 Водителю"), KeyboardButton(text="📊 Отчёт"))
     return b.as_markup(resize_keyboard=True)
 
+def main_kb_agent():
+    b = ReplyKeyboardBuilder()
+    b.row(KeyboardButton(text="🕯️ Ритуал"))
+    b.row(KeyboardButton(text="🚕 Водителю"))
+    return b.as_markup(resize_keyboard=True)
+
 def get_menu(role):
-    if role == "super_admin": return main_kb_admin()
+    if role == "super_admin": return main_kb_super_admin()
     if role == "manager": return main_kb_manager()
     return main_kb_agent()
 
@@ -386,12 +411,16 @@ async def start_order(cb: types.CallbackQuery, state: FSMContext):
     await state.update_data(type=order_type)
     await state.update_data(extras=[])
     
-    txt = "⚰️ ПОХОРОНЫ\n\nФИО заказчика:" if order_type == "funeral" else "🔥 КРЕМАЦИЯ\n\nФИО заказчика:"
+    txt = "⚰️ ПОХОРОНЫ\n\nДата события (дд.мм.гггг):" if order_type == "funeral" else "🔥 КРЕМАЦИЯ\n\nДата события (дд.мм.гггг):"
     await cb.message.edit_text(txt)
     await cb.answer()
-    await state.set_state(Ritual.customer)
+    await state.set_state(Ritual.event_date)
 
-# --- ОБЩИЕ ПОЛЯ ---
+@dp.message(Ritual.event_date)
+async def r_date(m: types.Message, state: FSMContext):
+    await state.update_data(event_date=m.text.strip())
+    await m.answer("ФИО заказчика:")
+    await state.set_state(Ritual.customer)
 
 @dp.message(Ritual.customer)
 async def r_customer(m: types.Message, state: FSMContext):
@@ -430,12 +459,18 @@ async def r_coffin(m: types.Message, state: FSMContext):
 @dp.message(Ritual.temple)
 async def r_temple(m: types.Message, state: FSMContext):
     await state.update_data(temple=m.text.strip().upper())
-    await m.answer("Кладбище (авто Крематорий? нет, обычное):")
+    await m.answer("Кладбище:")
     await state.set_state(Ritual.cemetery)
 
 @dp.message(Ritual.cemetery)
 async def r_cemetery(m: types.Message, state: FSMContext):
     await state.update_data(cemetery=m.text.strip().upper())
+    await save_ritual_order(m, state)
+
+@dp.message(Ritual.temple_cremation)
+async def cremation_temple(m: types.Message, state: FSMContext):
+    await state.update_data(temple=m.text.strip().upper())
+    await state.update_data(cemetery="Крематорий")
     await save_ritual_order(m, state)
 
 # --- ВЕТКА КРЕМАЦИИ ---
@@ -481,7 +516,8 @@ async def extras_handler(cb: types.CallbackQuery, state: FSMContext):
         else:
             await cb.answer("Услуги сохранены")
             await cb.message.answer("Храм:")
-            await state.set_state(Ritual.temple) # Используем тот же стейт, но логика другая
+            # Переходим в стейт temple, но после него cemetery будет Крематорий
+            await state.set_state(Ritual.temple_cremation)
         return
 
     if key in extras:
@@ -493,20 +529,6 @@ async def extras_handler(cb: types.CallbackQuery, state: FSMContext):
     await cb.message.edit_reply_markup(reply_markup=extras_kb(extras))
     await cb.answer()
 
-# Обработка храма для кремации (если не выбран зал)
-@dp.message(Ritual.temple) 
-async def cremation_temple(m: types.Message, state: FSMContext):
-    # Проверяем тип заказа, чтобы не сработать для похорон (там свой обработчик)
-    # Но так как FSM общий, лучше проверить контекст или использовать разные стейты
-    # Упростим: если в стейте нет гроба, значит это кремация
-    
-    data = await state.get_data()
-    if "coffin" not in data:
-        # Это кремация
-        await state.update_data(temple=m.text.strip().upper())
-        await state.update_data(cemetery="Крематорий")
-        await save_ritual_order(m, state)
-
 # ============================================================
 # СОХРАНЕНИЕ И ВЫВОД РЕЗУЛЬТАТА
 # ============================================================
@@ -516,9 +538,6 @@ async def save_ritual_order(m, state: FSMContext):
     
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     o_type = data["type"]
-    
-    # Формируем строку для CSV
-    # Структура: Дата, Тип, Заказчик, Тел, Усопший, Гроб/Урна, Допы, Храм, Кладбище
     
     details = ""
     extras = "; ".join(data.get("extras", []))
@@ -530,9 +549,9 @@ async def save_ritual_order(m, state: FSMContext):
         if urn == "Пластик": urn += f" ({data.get('urn_color', '')})"
         details = urn
 
-    row = f"{now},{o_type},{data['customer']},{data['phone']},{data['deceased']},{details},{extras},{data.get('temple','')},{data['cemetery']}"
+    row = f"{now},{data['event_date']},{o_type},{data['customer']},{data['phone']},{data['deceased']},{details},{extras},{data.get('temple','')},{data['cemetery']}"
     
-    ok = github_append("ritual/orders.csv", row, "Дата,Тип,Заказчик,Тел,Усопший,Детали,Допы,Храм,Кладбище")
+    ok = github_append("ritual/orders.csv", row, "Дата_записи,Дата_события,Тип,Заказчик,Тел,Усопший,Детали,Допы,Храм,Кладбище")
     
     # 1. Маршрут водителю
     route = build_driver_route(data)
@@ -552,7 +571,7 @@ async def save_ritual_order(m, state: FSMContext):
 
 def build_driver_route(data):
     t = data["type"]
-    txt = f"🚕 ЗАКАЗ ВОДИТЕЛЮ\nТип: {'Похороны' if t=='funeral' else 'Кремация'}\n"
+    txt = f"🚕 ЗАКАЗ ВОДИТЕЛЮ\nДата: {data.get('event_date','')}\nТип: {'Похороны' if t=='funeral' else 'Кремация'}\n"
     txt += f"Усопший: {data['deceased']}\n"
     
     if t == "funeral":
@@ -575,14 +594,22 @@ def build_crematorium_card(data):
     urn = data.get('urn_type', '')
     if urn == 'Пластик': urn += f" ({data.get('urn_color','')})"
     
-    extras = "; ".join(data.get("extras", []))
-    if not extras: extras = "НЕТ"
+    # Переводим ключи допов в русский текст
+    extras_map = {
+        "box_pol": "Гроб полированный",
+        "large": "Крупное тело",
+        "hall": "Зал+отпевание",
+        "urgent": "Срочная"
+    }
+    extras_raw = data.get("extras", [])
+    extras_ru = [extras_map.get(e, e) for e in extras_raw]
+    extras_text = "; ".join(extras_ru) if extras_ru else "НЕТ"
     
     return (
         f"🔥 КРЕМАЦИЯ\n"
         f"Усопший: {data['deceased']}\n"
         f"Урна: {urn}\n"
-        f"Допы: {extras}\n\n"
+        f"Допы: {extras_text}\n\n"
         f"Все стандартно, оплата наличными, оформлю в день кремации."
     )
 
@@ -629,10 +656,8 @@ async def add_body(m: types.Message, state: FSMContext):
 
 @dp.message(F.text == "🔄 Новая смена")
 async def new_shift(m: types.Message, state: FSMContext):
-    current_shift["date"] = datetime.now()
-    current_shift["bodies"] = []
-    await m.answer("📝 Новая смена\n\nФамилия:")
-    await state.set_state(Morg.surname)
+    await m.answer("Выбери морг:", reply_markup=location_kb())
+    await state.set_state(Morg.location)
 
 @dp.message(F.text == "🔒 Подвести смену")
 async def close_shift(m: types.Message, state: FSMContext):
@@ -643,12 +668,52 @@ async def close_shift(m: types.Message, state: FSMContext):
     await m.answer("📋 Нажми на фамилию:", reply_markup=pay_kb(current_shift["bodies"]))
     await state.set_state(Morg.closing)
 
-# ... (Хендлеры морга аналогичны v4.0, для экономии места не дублирую,
-# но в реальном файле они должны быть. Я добавлю их ниже в финальный файл).
+@dp.message(F.text == "📋 Смена за сегодня")
+async def today_report(m: types.Message):
+    today = datetime.now()
+    ym = today.strftime("%Y-%m")
+    d = today.strftime("%Y-%m-%d")
+    
+    txt = ""
+    total_san = 0; total_trn = 0; total_bodies = 0
+    
+    for loc, name in [("perv", "Первомайская 13"), ("mira", "Мира 11")]:
+        content = read_file(f"morg/{loc}/{ym}/{d}.csv")
+        if content:
+            loc_san = 0; loc_trn = 0; loc_bodies = 0
+            for line in content.strip().split("\n")[1:]:
+                p = line.split(",")
+                if len(p) < 4: continue
+                loc_bodies += 1
+                if p[3].strip().upper() in ("ДА","YES","TRUE","1"):
+                    s = 6500 if p[1].strip()=="Стандарт" else 8000
+                    t = 1500 if p[1].strip()=="Стандарт" else 2000
+                    loc_san += s; loc_trn += t
+            total_san += loc_san; total_trn += loc_trn; total_bodies += loc_bodies
+            txt += f"🏥 {name}: {loc_bodies} тел | 💰 {loc_san}₽ сан. | 🚚 {loc_trn}₽ пер.\n\n"
+    
+    if not txt:
+        txt = "Смен за сегодня нет.\n\n"
+    
+    txt += f"📊 ИТОГО:\nВсего тел: {total_bodies}\nСанитары: {total_san}₽\nПеревозка: {total_trn}₽"
+    await m.answer(txt)
 
 # ============================================================
 # МОРГ — ПОЛНАЯ ВЕРСИЯ
 # ============================================================
+
+@dp.callback_query(F.data.in_(["loc_perv", "loc_mira"]))
+async def morg_location(cb: types.CallbackQuery, state: FSMContext):
+    loc = "perv" if cb.data == "loc_perv" else "mira"
+    loc_name = "Первомайская 13" if cb.data == "loc_perv" else "Мира 11"
+    
+    current_shift["location"] = loc
+    current_shift["date"] = datetime.now()
+    current_shift["bodies"] = []
+    
+    await cb.message.edit_text(f"🏥 {loc_name}\n\n📝 Смена начата\n\nФамилия:")
+    await cb.answer()
+    await state.set_state(Morg.surname)
 
 @dp.message(Morg.surname)
 async def morg_surname(m: types.Message, state: FSMContext):
@@ -705,8 +770,12 @@ async def morg_org(m: types.Message, state: FSMContext):
 
 async def show_calc(m, bodies, state):
     if not current_shift["date"]: current_shift["date"] = datetime.now()
+    
+    loc = current_shift.get("location", "perv")
+    loc_name = "Первомайская 13" if loc == "perv" else "Мира 11"
+    
     san = 0; trn = 0
-    txt = f"📊 СМЕНА {current_shift['date'].strftime('%d.%m.%Y')}\n"
+    txt = f"📊 СМЕНА {loc_name} | {current_shift['date'].strftime('%d.%m.%Y')}\n"
     for i, b in enumerate(bodies, 1):
         if b.get("paid"):
             s = 6500 if b["type"]=="Стандарт" else 8000
@@ -715,18 +784,19 @@ async def show_calc(m, bodies, state):
             txt += f"{i}. {b['surname']} — {s}\n"
     txt += f"\n━━━━━━━━━━\n🧑‍⚕️ {san}₽\n🚚 {trn}₽"
     
-    # Сохранение
+    # Сохранение в папку морга
     lines = ["Фамилия,Тип,Источник,Оплачено,Организация"]
     for b in bodies:
         lines.append(f"{b['surname']},{b['type']},{b['source']},{'ДА' if b['paid'] else 'НЕТ'},")
     
     ym = current_shift["date"].strftime("%Y-%m")
     d = current_shift["date"].strftime("%Y-%m-%d")
-    github_upload(f"morg/{ym}/{d}.csv", "\n".join(lines))
+    github_upload(f"morg/{loc}/{ym}/{d}.csv", "\n".join(lines))
     
     txt += "\n✅ GitHub"
     await m.answer(txt)
     current_shift["date"] = None
+    current_shift["location"] = None
     current_shift["bodies"] = []
     await state.clear()
 
