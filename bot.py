@@ -655,10 +655,8 @@ async def ritual_salary(message: types.Message, state: FSMContext):
 # ==========================================
 
 USE_WEBHOOK = os.getenv("USE_WEBHOOK", "False").lower() == "true"
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/webhook")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
-WEBHOOK_PORT = int(os.getenv("PORT", 8080))
 
 @dp.errors()
 async def errors_handler(exception):
@@ -666,72 +664,115 @@ async def errors_handler(exception):
     return True
 
 
-async def on_startup():
-    """Настройка вебхука при запуске"""
-    if USE_WEBHOOK and WEBHOOK_URL:
-        await bot.set_webhook(
-            url=f"{WEBHOOK_URL}{WEBHOOK_PATH}",
-            secret_token=WEBHOOK_SECRET if WEBHOOK_SECRET else None
-        )
-        logger.info(f"Webhook установлен: {WEBHOOK_URL}{WEBHOOK_PATH}")
+async def on_startup(bot: Bot):
+    """При старте на Render — регистрируем вебхук в Telegram"""
+    # Render автоматически задаёт эти переменные
+    external_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+    hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
 
+    if not external_url and hostname:
+        external_url = f"https://{hostname}"
 
-async def on_shutdown():
-    """Удаление вебхука при остановке"""
-    if USE_WEBHOOK:
-        await bot.delete_webhook()
-        logger.info("Webhook удалён")
+    logger.info(f"RENDER_EXTERNAL_URL={os.getenv('RENDER_EXTERNAL_URL')}")
+    logger.info(f"RENDER_EXTERNAL_HOSTNAME={hostname}")
 
+    if not external_url:
+        logger.error("RENDER_EXTERNAL_URL не установлен! Вебхук не зарегистрирован!")
+        return
 
-async def start_webhook():
-    """Запуск бота с вебхуком"""
-    from aiohttp import web
-    
-    app = web.Application()
-    
-    # Обработчик вебхуков
-    async def webhook_handler(request):
-        if WEBHOOK_SECRET:
-            secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-            if secret != WEBHOOK_SECRET:
-                return web.Response(status=401)
-        
-        update = await request.json()
-        await dp.feed_webhook_update(bot, update, bot=bot)
-        return web.Response()
-    
-    app.router.add_post(WEBHOOK_PATH, webhook_handler)
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-    
-    logger.info(f"Запуск вебхука на порту {WEBHOOK_PORT}...")
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", WEBHOOK_PORT)
-    await site.start()
-    
-    # Бесконечный цикл для удержания процесса
+    # Telegram разрешает только A-Z a-z 0-9 - _
+    secret = WEBHOOK_SECRET if WEBHOOK_SECRET and all(c.isalnum() or c in "-_" for c in WEBHOOK_SECRET) else None
+
+    url = f"{external_url}{WEBHOOK_PATH}"
     try:
-        while True:
-            import asyncio
-            await asyncio.sleep(3600)
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        await runner.cleanup()
+        await bot.set_webhook(url=url, secret_token=secret)
+        logger.info(f"✅ Вебхук установлен: {url}")
+    except Exception as e:
+        logger.error(f"❌ Ошибка установки вебхука: {e}")
 
 
-async def main():
-    if USE_WEBHOOK:
-        logger.info("Режим: WEBHOOK")
-        await start_webhook()
-    else:
-        logger.info("Режим: POLLING")
-        await on_startup()
+async def on_shutdown(bot: Bot):
+    """При остановке — НЕ удаляем вебхук (Render перезапускается часто)"""
+    pass
+
+
+def run_webhook():
+    """Render.com — webhook + aiohttp сервер"""
+    from aiohttp import web
+    from aiogram.webhook.aiohttp_server import (
+        SimpleRequestHandler,
+        setup_application,
+    )
+
+    token = os.getenv("BOT_TOKEN")
+    if not token:
+        logger.error("BOT_TOKEN не установлен!")
+        return
+
+    bot = Bot(token=token)
+
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
+
+    app = web.Application()
+
+    # Health check
+    async def health(request):
+        return web.Response(text="OK", status=200)
+
+    app.router.add_get("/health", health)
+    app.router.add_get("/", health)
+
+    # Обработчик вебхука
+    secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
+    SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+        secret_token=secret,
+    ).register(app, path=WEBHOOK_PATH)
+
+    setup_application(app, dp, bot=bot)
+
+    port = int(os.getenv("PORT", 10000))
+    logger.info(f"Бот запущен (webhook) на порту {port}!")
+
+    web.run_app(app, host="0.0.0.0", port=port)
+
+
+def run_polling():
+    """Локальный режим — polling"""
+    token = os.getenv("BOT_TOKEN")
+    if not token:
+        logger.error("BOT_TOKEN не установлен!")
+        return
+
+    async def _main():
+        bot = Bot(token=token)
+        
+        # Удалить вебхук при локальном запуске
+        await bot.delete_webhook()
+        
+        # Команды меню
+        await bot.set_my_commands([
+            types.BotCommand(command="start", description="Запустить бота"),
+        ])
+
         try:
+            logger.info("Бот запущен (polling)!")
             await dp.start_polling(bot)
+        except Exception as e:
+            logger.error(f"Ошибка: {e}")
         finally:
-            await on_shutdown()
+            await bot.session.close()
+
+    asyncio.run(_main())
 
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    if USE_WEBHOOK:
+        run_webhook()
+    else:
+        try:
+            run_polling()
+        except KeyboardInterrupt:
+            logger.info("Остановлен")
