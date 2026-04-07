@@ -336,17 +336,26 @@ def get_menu(role):
 
 @dp.message(F.text == "/start")
 async def cmd_start(m: types.Message):
-    role = get_user_role(m.from_user.id)
-    if not role:
-        # Регистрация (упрощенно: пишем админу или просим ввести код)
-        # Временно: просто дадим доступ, если файл users.csv пуст или не настроен
-        # Для продакшена: нужно добавить логику запроса доступа
-        await m.answer("Вас нет в списке. Обратитесь к администратору.")
+    uid = m.from_user.id
+    logger.info(f"/start от {uid}")
+    
+    if uid not in users_cache:
+        await m.answer(f"⚠️ Вас нет в списке. Ваш ID: {uid}. Обратитесь к администратору.")
         return
 
+    user = users_cache[uid]
+    role = user["role"]
+    name = user["name"]
+    loc = user.get("location", "")
+    
+    logger.info(f"Доступ разрешён: {name} ({role})")
+    
     current_shift["date"] = datetime.now()
     current_shift["bodies"] = []
-    await m.answer(f"👋 Привет, {users_cache[m.from_user.id].get('name', 'Босс')}!\n\n📋 Меню:", reply_markup=get_menu(role))
+    
+    menu = get_menu(role)
+    loc_text = f" | {loc}" if loc else ""
+    await m.answer(f"👋 {name} ({role}{loc_text})\n\n📋 Меню:", reply_markup=menu)
 
 # --- АДМИН КОМАНДЫ ---
 
