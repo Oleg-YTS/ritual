@@ -35,7 +35,7 @@ if not BOT_TOKEN:
     logger.error("BOT_TOKEN не найден в .env файле!")
     exit(1)
 
-# Инициализация бота и диспетчера
+# Инициализация бота и диспетчера (для polling)
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
@@ -703,13 +703,6 @@ def run_webhook():
         setup_application,
     )
 
-    token = os.getenv("BOT_TOKEN")
-    if not token:
-        logger.error("BOT_TOKEN не установлен!")
-        return
-
-    bot = Bot(token=token)
-
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
@@ -722,7 +715,7 @@ def run_webhook():
     app.router.add_get("/health", health)
     app.router.add_get("/", health)
 
-    # Обработчик вебхука
+    # Обработчик вебхука — используем глобальный bot
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
     SimpleRequestHandler(
         dispatcher=dp,
@@ -768,12 +761,10 @@ def run_polling():
 
 
 if __name__ == "__main__":
-    # Автоопределение: если Render — используем webhook
-    is_render = (
-        os.getenv("RENDER_EXTERNAL_URL") or 
-        os.getenv("RENDER_EXTERNAL_HOSTNAME") or
-        os.getenv("USE_WEBHOOK", "").lower() == "true"
-    )
+    # На Render задаём RENDER=true в Environment Variables
+    is_render = os.getenv("RENDER", "").lower() == "true"
+    
+    logger.info(f"Режим: {'WEBHOOK (Render)' if is_render else 'POLLING (локально)'}")
     
     if is_render:
         run_webhook()
