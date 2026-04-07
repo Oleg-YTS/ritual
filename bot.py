@@ -327,8 +327,17 @@ def pay_kb(bodies):
 # ХЕЛПЕРЫ ДЛЯ СООБЩЕНИЙ
 # ============================================================
 
+def main_kb_manager():
+    b = ReplyKeyboardBuilder()
+    b.row(KeyboardButton(text="🔄 Новая смена"), KeyboardButton(text="➕ Добавить тело"))
+    b.row(KeyboardButton(text="🔒 Подвести смену"), KeyboardButton(text="🕯️ Ритуал"))
+    b.row(KeyboardButton(text="🚕 Водителю"), KeyboardButton(text="📊 Отчёт"))
+    return b.as_markup(resize_keyboard=True)
+
 def get_menu(role):
-    return main_kb_admin() if role == "admin" else main_kb_agent()
+    if role == "super_admin": return main_kb_admin()
+    if role == "manager": return main_kb_manager()
+    return main_kb_agent()
 
 # ============================================================
 # ОБРАБОТЧИКИ
