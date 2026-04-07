@@ -701,6 +701,10 @@ def run_webhook():
         setup_application,
     )
 
+    # Создаём бота внутри функции
+    wh_bot = Bot(token=BOT_TOKEN)
+
+    # Регистрируем хендлеры старта/остановки
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
@@ -713,15 +717,15 @@ def run_webhook():
     app.router.add_get("/health", health)
     app.router.add_get("/", health)
 
-    # Обработчик вебхука — используем глобальный bot
+    # Обработчик вебхука
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
     SimpleRequestHandler(
         dispatcher=dp,
-        bot=bot,
+        bot=wh_bot,
         secret_token=secret,
     ).register(app, path=WEBHOOK_PATH)
 
-    setup_application(app, dp, bot=bot)
+    setup_application(app, dp, bot=wh_bot)
 
     port = int(os.getenv("PORT", 10000))
     logger.info(f"Бот запущен (webhook) на порту {port}!")
@@ -759,15 +763,4 @@ def run_polling():
 
 
 if __name__ == "__main__":
-    # На Render задаём RENDER=true в Environment Variables
-    is_render = os.getenv("RENDER", "").lower() == "true"
-    
-    logger.info(f"Режим: {'WEBHOOK (Render)' if is_render else 'POLLING (локально)'}")
-    
-    if is_render:
-        run_webhook()
-    else:
-        try:
-            run_polling()
-        except KeyboardInterrupt:
-            logger.info("Остановлен")
+    run_webhook()
