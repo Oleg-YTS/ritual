@@ -66,8 +66,12 @@ last_driver_route = None
 # Текущий заказ (временный)
 current_order = {}
 
-# Пользователи (кэшируем локально для скорости)
-users_cache = {}  # {user_id: {"role": "admin", "name": "Oleg"}}
+# Пользователи (захардкожены для надёжности)
+users_cache = {
+    747600306: {"role": "super_admin", "name": "Евсеев", "location": "Мира 11"},
+    7819002363: {"role": "manager", "name": "Семенов", "location": "Первомайская 13"},
+    387529965: {"role": "agent", "name": "Жуков", "location": ""},
+}
 
 # ============================================================
 # FSM СОСТОЯНИЯ
@@ -731,8 +735,9 @@ async def on_startup():
     except Exception as e:
         logger.error(f"Webhook error: {e}")
     
-    # Кэш пользователей
-    load_users()
+    logger.info(f"Пользователи: {len(users_cache)}")
+    for uid, info in users_cache.items():
+        logger.info(f"  {uid} -> {info['role']} ({info['name']})")
 
 def main():
     dp.startup.register(on_startup)
