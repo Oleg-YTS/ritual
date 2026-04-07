@@ -680,8 +680,7 @@ async def on_startup(bot: Bot):
         logger.error("RENDER_EXTERNAL_URL не установлен! Вебхук не зарегистрирован!")
         return
 
-    # Telegram разрешает только A-Z a-z 0-9 - _
-    secret = WEBHOOK_SECRET if WEBHOOK_SECRET and all(c.isalnum() or c in "-_" for c in WEBHOOK_SECRET) else None
+    secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
 
     url = f"{external_url}{WEBHOOK_PATH}"
     try:
