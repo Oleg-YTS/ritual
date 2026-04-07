@@ -654,15 +654,82 @@ async def ritual_salary(message: types.Message, state: FSMContext):
 # ЗАПУСК
 # ==========================================
 
+USE_WEBHOOK = os.getenv("USE_WEBHOOK", "False").lower() == "true"
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/webhook")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+WEBHOOK_PORT = int(os.getenv("PORT", 8080))
+
 @dp.errors()
 async def errors_handler(exception):
     logger.error(f"Ошибка: {exception}")
     return True
 
 
+async def on_startup():
+    """Настройка вебхука при запуске"""
+    if USE_WEBHOOK and WEBHOOK_URL:
+        await bot.set_webhook(
+            url=f"{WEBHOOK_URL}{WEBHOOK_PATH}",
+            secret_token=WEBHOOK_SECRET if WEBHOOK_SECRET else None
+        )
+        logger.info(f"Webhook установлен: {WEBHOOK_URL}{WEBHOOK_PATH}")
+
+
+async def on_shutdown():
+    """Удаление вебхука при остановке"""
+    if USE_WEBHOOK:
+        await bot.delete_webhook()
+        logger.info("Webhook удалён")
+
+
+async def start_webhook():
+    """Запуск бота с вебхуком"""
+    from aiohttp import web
+    
+    app = web.Application()
+    
+    # Обработчик вебхуков
+    async def webhook_handler(request):
+        if WEBHOOK_SECRET:
+            secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+            if secret != WEBHOOK_SECRET:
+                return web.Response(status=401)
+        
+        update = await request.json()
+        await dp.feed_webhook_update(bot, update, bot=bot)
+        return web.Response()
+    
+    app.router.add_post(WEBHOOK_PATH, webhook_handler)
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+    
+    logger.info(f"Запуск вебхука на порту {WEBHOOK_PORT}...")
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", WEBHOOK_PORT)
+    await site.start()
+    
+    # Бесконечный цикл для удержания процесса
+    try:
+        while True:
+            import asyncio
+            await asyncio.sleep(3600)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        await runner.cleanup()
+
+
 async def main():
-    logger.info("Запуск бота...")
-    await dp.start_polling(bot)
+    if USE_WEBHOOK:
+        logger.info("Режим: WEBHOOK")
+        await start_webhook()
+    else:
+        logger.info("Режим: POLLING")
+        await on_startup()
+        try:
+            await dp.start_polling(bot)
+        finally:
+            await on_shutdown()
 
 
 if __name__ == "__main__":
