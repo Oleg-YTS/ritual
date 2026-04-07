@@ -169,16 +169,37 @@ def github_append(path, row, headers):
 
 def load_users():
     global users_cache
-    content = read_file("users.csv")
     users_cache = {}
-    if content:
-        for line in content.strip().split("\n")[1:]:
-            parts = line.split(",")
-            if len(parts) >= 2:
-                users_cache[int(parts[0])] = {"role": parts[1], "name": parts[2] if len(parts) > 2 else "User"}
-    
-    # Если файл пустой и нас нет — добавим создателя как админа (первый запуск)
-    # (упрощение: пока можно просто создать файл вручную)
+    try:
+        # Сначала пробуем локальный файл (Render)
+        with open("users.csv", 'r', encoding='utf-8') as f:
+            for line in f.read().strip().split("\n")[1:]:
+                parts = line.split(",")
+                if len(parts) >= 2:
+                    uid = int(parts[0].strip())
+                    users_cache[uid] = {
+                        "role": parts[1].strip(),
+                        "name": parts[2].strip() if len(parts) > 2 else "User",
+                        "location": parts[3].strip() if len(parts) > 3 else ""
+                    }
+        logger.info(f"Загружено пользователей: {len(users_cache)}")
+        for uid, info in users_cache.items():
+            logger.info(f"  {uid} -> {info['role']} ({info['name']})")
+    except Exception as e:
+        logger.error(f"Load users error: {e}")
+        # Fallback: пробуем GitHub
+        content = github_read("users.csv")
+        if content:
+            for line in content.strip().split("\n")[1:]:
+                parts = line.split(",")
+                if len(parts) >= 2:
+                    uid = int(parts[0].strip())
+                    users_cache[uid] = {
+                        "role": parts[1].strip(),
+                        "name": parts[2].strip() if len(parts) > 2 else "User",
+                        "location": parts[3].strip() if len(parts) > 3 else ""
+                    }
+            logger.info(f"Загружено из GitHub: {len(users_cache)}")
 
 def get_user_role(user_id):
     if user_id in users_cache:
