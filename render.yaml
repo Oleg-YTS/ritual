@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ritual-bot
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: REPO_NAME
+        value: Oleg-YTS/ritual
