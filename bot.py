@@ -16,9 +16,6 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 from dotenv import load_dotenv
 from github import Github, GithubException
 
-# Загрузка переменных окружения
-load_dotenv()
-
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +23,9 @@ logger = logging.getLogger(__name__)
 # ==========================================
 # КОНФИГУРАЦИЯ
 # ==========================================
+
+# Загрузка переменных окружения
+load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -35,10 +35,13 @@ if not BOT_TOKEN:
     logger.error("BOT_TOKEN не найден в .env файле!")
     exit(1)
 
-# Инициализация бота и диспетчера (для polling)
-bot = Bot(token=BOT_TOKEN)
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
+# Глобальные данные смен и заказов
+current_shift = {"date": None, "bodies": []}
+last_driver_route = None
+current_order = {}
+
+# Диспетчер (для регистрации хендлеров через @dp.message)
+dp = Dispatcher(storage=MemoryStorage())
 
 # Инициализация GitHub (опционально)
 github_client = None
@@ -666,32 +669,27 @@ async def errors_handler(exception):
 
 async def on_startup(bot: Bot):
     """При старте на Render — регистрируем вебхук в Telegram"""
-    # Render автоматически задаёт эти переменные
     external_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
     hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
 
     if not external_url and hostname:
         external_url = f"https://{hostname}"
 
-    logger.info(f"RENDER_EXTERNAL_URL={os.getenv('RENDER_EXTERNAL_URL')}")
-    logger.info(f"RENDER_EXTERNAL_HOSTNAME={hostname}")
-
     if not external_url:
-        logger.error("RENDER_EXTERNAL_URL не установлен! Вебхук не зарегистрирован!")
+        logger.error("RENDER_EXTERNAL_URL не установлен!")
         return
 
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
-
     url = f"{external_url}{WEBHOOK_PATH}"
+    
     try:
         await bot.set_webhook(url=url, secret_token=secret)
-        logger.info(f"✅ Вебхук установлен: {url}")
+        logger.info(f"Webhook: {url}")
     except Exception as e:
-        logger.error(f"❌ Ошибка установки вебхука: {e}")
+        logger.error(f"Webhook error: {e}")
 
 
 async def on_shutdown(bot: Bot):
-    """При остановке — НЕ удаляем вебхук (Render перезапускается часто)"""
     pass
 
 
@@ -715,7 +713,7 @@ def run_webhook():
     app.router.add_get("/health", health)
     app.router.add_get("/", health)
 
-    # Обработчик вебхука — используем глобальный bot
+    # Обработчик вебхука
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
     SimpleRequestHandler(
         dispatcher=dp,
