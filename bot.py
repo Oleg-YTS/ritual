@@ -768,7 +768,14 @@ def run_polling():
 
 
 if __name__ == "__main__":
-    if USE_WEBHOOK:
+    # Автоопределение: если Render — используем webhook
+    is_render = (
+        os.getenv("RENDER_EXTERNAL_URL") or 
+        os.getenv("RENDER_EXTERNAL_HOSTNAME") or
+        os.getenv("USE_WEBHOOK", "").lower() == "true"
+    )
+    
+    if is_render:
         run_webhook()
     else:
         try:
