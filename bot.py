@@ -22,7 +22,6 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 from dotenv import load_dotenv
 from github import Github, GithubException
-from github.auth import Token as GithubToken
 
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ
@@ -50,7 +49,7 @@ dp = Dispatcher(storage=MemoryStorage())
 repo = None
 if GITHUB_TOKEN and REPO_NAME:
     try:
-        github = Github(auth=GithubToken(GITHUB_TOKEN))
+        github = Github(GITHUB_TOKEN)
         repo = github.get_repo(REPO_NAME)
         logger.info(f"GitHub: {REPO_NAME}")
     except Exception as e:
