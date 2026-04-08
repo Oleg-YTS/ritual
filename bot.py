@@ -47,6 +47,9 @@ if GITHUB_TOKEN and REPO_NAME:
 # ============================================================
 # ГЛОБАЛЬНЫЕ ДАННЫЕ
 # ============================================================
+# Тестовые роли (для отладки)
+test_roles = {}
+
 # Раздельные смены и конфиги
 shifts = {
     "perv": {"date": None, "bodies": []},
@@ -283,15 +286,37 @@ async def cmd_start(m: types.Message):
     uid = m.from_user.id; logger.info(f"/start от {uid}")
     if uid not in users_cache:
         await m.answer(f"⚠️ Вас нет в списке. ID: {uid}"); return
-    u = users_cache[uid]; role=u["role"]; name=u["name"]; loc=u.get("location","")
+
+    # Проверяем тестовую роль
+    role = test_roles.get(uid, users_cache[uid]["role"])
+    name = users_cache[uid]["name"]; loc = users_cache[uid].get("location","")
+
     # Сбрасываем все смены при старте
     for s in shifts.values(): s["date"]=None; s["bodies"]=[]
     loc_t = f" | {loc}" if loc else ""
-    await m.answer(f"👋 {name} ({role}{loc_t})\n\n📋 Меню:", reply_markup=get_menu(role))
+    test_note = f"\n🧪 Тест-роль: {role}" if role != users_cache[uid]["role"] else ""
+    await m.answer(f"👋 {name} ({role}{loc_t}){test_note}\n\n📋 Меню:", reply_markup=get_menu(role))
+
+# Команда смены роли для тестирования (только для super_admin)
+@dp.message(F.text.startswith("/role"))
+async def change_role(m: types.Message):
+    uid = m.from_user.id
+    if users_cache.get(uid, {}).get("role") != "super_admin":
+        await m.answer("⚠️ Только для super_admin"); return
+
+    parts = m.text.split()
+    if len(parts) < 2 or parts[1] not in ("super_admin", "manager", "agent"):
+        await m.answer("Использование: /role <role>\nДоступно: super_admin, manager, agent"); return
+
+    role = parts[1]
+    test_roles[uid] = role
+    name = users_cache[uid]["name"]
+    await m.answer(f"🧪 {name}, роль изменена на: {role}\n\nНажми /start для обновления меню")
 
 @dp.message(F.text == "👥 Пользователи")
 async def users_menu(m: types.Message):
-    if users_cache.get(m.from_user.id,{}).get("role")!="super_admin": return
+    role = test_roles.get(m.from_user.id, users_cache.get(m.from_user.id, {}).get("role"))
+    if role != "super_admin": return
     await m.answer("Функция в разработке. Правьте users.csv вручную.")
 
 # ============================================================
@@ -312,13 +337,17 @@ async def add_body(m: types.Message, state: FSMContext):
 
 def find_active_location(user_id):
     """Находит активный морг пользователя"""
+    # Для тест-роли используем локацию из кэша
+    role = test_roles.get(user_id)
+    if role:
+        for l, s in shifts.items():
+            if s["date"]: return l
+        return "mira"  # По умолчанию для теста
     u = users_cache.get(user_id, {})
-    # Если у пользователя есть location — используем его
     loc_map = {"Первомайская 13": "perv", "Мира 11": "mira"}
     if u.get("location") in loc_map:
         loc = loc_map[u["location"]]
         if shifts[loc]["date"]: return loc
-    # Иначе ищем любой активный
     for l, s in shifts.items():
         if s["date"]: return l
     return None
