@@ -338,11 +338,11 @@ async def users_menu(m: types.Message):
 # ============================================================
 @dp.message(F.text == "➕ Добавить тело")
 async def add_body(m: types.Message, state: FSMContext):
-    # Определяем активный морг
     loc = find_active_location(m.from_user.id)
     if not loc:
         await m.answer("Сначала выбери морг через 🔄 Новая смена"); return
     shift = shifts[loc]
+    await state.update_data(loc=loc)  # Сохраняем loc
     if not shift["date"]:
         shift["date"]=datetime.now(); shift["bodies"]=[]
         await m.answer(f"🏥 {MORG_CONFIG[loc]['name']}\n\n📝 Смена начата\n\nФамилия:")
@@ -376,6 +376,7 @@ async def morg_location(cb: types.CallbackQuery, state: FSMContext):
     loc = "perv" if cb.data=="loc_perv" else "mira"
     name = MORG_CONFIG[loc]["name"]
     shifts[loc]["date"]=datetime.now(); shifts[loc]["bodies"]=[]
+    await state.update_data(loc=loc)  # Сохраняем loc в state
     await cb.message.edit_text(f"🏥 {name}\n\n📝 Смена начата\n\nФамилия:")
     await cb.answer(); await state.set_state(Morg.surname)
 
@@ -383,7 +384,9 @@ async def morg_location(cb: types.CallbackQuery, state: FSMContext):
 async def morg_surname(m: types.Message, state: FSMContext):
     s = m.text.strip().upper()
     if not s: await m.answer("⚠️ Введи фамилию:"); return
-    loc = find_active_location(m.from_user.id)
+    # Берём loc из state (сохранён при выборе морга) или ищем активный
+    data = await state.get_data()
+    loc = data.get("loc") or find_active_location(m.from_user.id)
     await state.update_data(surname=s, loc=loc)
     await m.answer("Тип:", reply_markup=kb_type())
     await state.set_state(Morg.type)
@@ -402,7 +405,7 @@ async def morg_source(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     loc = data.get("loc")
     if not loc:
-        await cb.answer("Ошибка: морг не выбран"); return
+        await cb.answer("Ошибка: морг не выбран. Начни через 🔄 Новая смена"); return
     body = {"surname":data["surname"],"type":data["body_type"],"source":src,"paid":None,"org":""}
     shifts[loc]["bodies"].append(body)
     n = len(shifts[loc]["bodies"])
@@ -414,11 +417,38 @@ async def morg_source(cb: types.CallbackQuery, state: FSMContext):
 
 @dp.message(F.text == "🔒 Подвести смену")
 async def close_shift(m: types.Message, state: FSMContext):
-    loc = find_active_location(m.from_user.id)
-    if not loc or not shifts[loc]["bodies"]:
-        await m.answer("⚠️ Смена пуста или не начата."); return
+    # Проверяем ВСЕ смены
+    active = []
+    for loc in shifts:
+        s = shifts[loc]
+        if s["date"] and s["bodies"]:
+            active.append(loc)
+            logger.info(f"Активная смена {loc}: {len(s['bodies'])} тел")
+    
+    logger.info(f"close_shift: active={active}")
+    
+    if not active:
+        await m.answer("⚠️ Смена пуста или не начата. Сначала выбери 🔄 Новая смена."); return
+    
+    if len(active) == 1:
+        loc = active[0]
+        await state.update_data(bodies=shifts[loc]["bodies"].copy(), loc=loc)
+        cfg = MORG_CONFIG[loc]
+        await m.answer(f"📋 {cfg['name']} — Нажми на фамилию:", reply_markup=kb_pay(shifts[loc]["bodies"]))
+        await state.set_state(Morg.closing)
+    else:
+        b = InlineKeyboardBuilder()
+        for loc in active:
+            b.row(InlineKeyboardButton(text=f"🏥 {MORG_CONFIG[loc]['name']}", callback_data=f"close_loc_{loc}"))
+        await m.answer("Выбери морг:", reply_markup=b.as_markup())
+
+@dp.callback_query(F.data.startswith("close_loc_"))
+async def close_shift_loc(cb: types.CallbackQuery, state: FSMContext):
+    loc = cb.data.split("_")[-1]
     await state.update_data(bodies=shifts[loc]["bodies"].copy(), loc=loc)
-    await m.answer(f"📋 {MORG_CONFIG[loc]['name']} — Нажми на фамилию:", reply_markup=kb_pay(shifts[loc]["bodies"]))
+    cfg = MORG_CONFIG[loc]
+    await cb.message.edit_text(f"📋 {cfg['name']} — Нажми на фамилию:", reply_markup=kb_pay(shifts[loc]["bodies"]))
+    await cb.answer()
     await state.set_state(Morg.closing)
 
 @dp.callback_query(F.data.startswith("pay_"))
@@ -456,10 +486,14 @@ async def morg_org(m: types.Message, state: FSMContext):
 
 async def show_calc(m, bodies, state):
     data = await state.get_data()
-    loc = data.get("loc", find_active_location(m.from_user.id))
+    loc = data.get("loc")
+    if not loc or loc not in shifts:
+        # Fallback: ищем активную смену
+        for l in shifts:
+            if shifts[l]["date"] and shifts[l]["bodies"]:
+                loc = l; break
     if not loc: return
-    cfg = MORG_CONFIG[loc]
-    name = cfg["name"]
+    cfg = MORG_CONFIG[loc]; name = cfg["name"]
 
     stat = [b for b in bodies if b["source"]=="Отделение"]
     amb = [b for b in bodies if b["source"]=="Амбулаторно"]
