@@ -647,7 +647,10 @@ async def extras_hdl(cb: types.CallbackQuery, state: FSMContext):
     if key in extras: extras.remove(key)
     else: extras.append(key)
     await state.update_data(extras=extras)
-    await cb.message.edit_reply_markup(reply_markup=kb_extras(extras))
+    try:
+        await cb.message.edit_reply_markup(reply_markup=kb_extras(extras))
+    except Exception:
+        pass  # Игнорируем "message not modified"
     await cb.answer()
 
 # ============================================================
