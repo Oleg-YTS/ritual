@@ -50,6 +50,12 @@ if GITHUB_TOKEN and REPO_NAME:
 # Тестовые роли (для отладки)
 test_roles = {}
 
+# Список кнопок меню, чтобы не попадали в ввод данных
+MENU_BTNS = [
+    "➕ Добавить тело", "🔄 Новая смена", "🔒 Подвести смену", "📋 Смена за сегодня",
+    "🕯️ Ритуал", "🚕 Водителю", "📊 Отчёт", "👥 Пользователи"
+]
+
 # Раздельные смены и конфиги
 shifts = {
     "perv": {"date": None, "bodies": []},
@@ -275,7 +281,15 @@ def kb_extras(sel=None):
 def kb_order_select(orders):
     b = InlineKeyboardBuilder()
     for i, o in enumerate(orders):
-        b.row(InlineKeyboardButton(text=f"📋 {o['deceased']}", callback_data=f"sel_ord_{i}"))
+        label = "🔥" if o["type"]=="cremation" else "⚰️"
+        b.row(InlineKeyboardButton(text=f"{label} {o['deceased']}", callback_data=f"sel_ord_{i}"))
+    return b.as_markup()
+
+def kb_order_actions(order_idx):
+    """Кнопки выбора: водитель или крематорий"""
+    b = InlineKeyboardBuilder()
+    b.row(InlineKeyboardButton(text="🚕 Водителю", callback_data=f"send_driver_{order_idx}"))
+    b.row(InlineKeyboardButton(text="🔥 Крематорий", callback_data=f"send_crem_{order_idx}"))
     return b.as_markup()
 
 # ============================================================
@@ -365,7 +379,7 @@ async def morg_location(cb: types.CallbackQuery, state: FSMContext):
     await cb.message.edit_text(f"🏥 {name}\n\n📝 Смена начата\n\nФамилия:")
     await cb.answer(); await state.set_state(Morg.surname)
 
-@dp.message(Morg.surname)
+@dp.message(Morg.surname, ~F.text.in_(MENU_BTNS))
 async def morg_surname(m: types.Message, state: FSMContext):
     s = m.text.strip().upper()
     if not s: await m.answer("⚠️ Введи фамилию:"); return
@@ -429,7 +443,7 @@ async def calc_shift(cb: types.CallbackQuery, state: FSMContext):
             return
     await cb.answer(); await show_calc(cb.message, bodies, state)
 
-@dp.message(Morg.org)
+@dp.message(Morg.org, ~F.text.in_(MENU_BTNS))
 async def morg_org(m: types.Message, state: FSMContext):
     data = await state.get_data(); bodies = data.get("bodies",[]); i = data.get("idx",0)
     bodies[i]["org"] = m.text.strip().upper()
@@ -547,24 +561,24 @@ async def start_order(cb: types.CallbackQuery, state: FSMContext):
     await cb.message.edit_text(txt); await cb.answer()
     await state.set_state(Ritual.event_date)
 
-@dp.message(Ritual.event_date)
+@dp.message(Ritual.event_date, ~F.text.in_(MENU_BTNS))
 async def r_date(m: types.Message, state: FSMContext):
     await state.update_data(event_date=m.text.strip())
     await m.answer("ФИО заказчика:"); await state.set_state(Ritual.customer)
 
-@dp.message(Ritual.customer)
+@dp.message(Ritual.customer, ~F.text.in_(MENU_BTNS))
 async def r_customer(m: types.Message, state: FSMContext):
     s=m.text.strip().upper()
     if not s: await m.answer("⚠️ Введи ФИО:"); return
     await state.update_data(customer=s)
     await m.answer("Телефон:"); await state.set_state(Ritual.phone)
 
-@dp.message(Ritual.phone)
+@dp.message(Ritual.phone, ~F.text.in_(MENU_BTNS))
 async def r_phone(m: types.Message, state: FSMContext):
     await state.update_data(phone=m.text.strip())
     await m.answer("ФИО усопшего + адрес:"); await state.set_state(Ritual.deceased)
 
-@dp.message(Ritual.deceased)
+@dp.message(Ritual.deceased, ~F.text.in_(MENU_BTNS))
 async def r_deceased(m: types.Message, state: FSMContext):
     await state.update_data(deceased=m.text.strip().upper())
     data = await state.get_data()
@@ -575,22 +589,22 @@ async def r_deceased(m: types.Message, state: FSMContext):
         await state.set_state(Ritual.urn_type)
 
 # Похороны
-@dp.message(Ritual.coffin)
+@dp.message(Ritual.coffin, ~F.text.in_(MENU_BTNS))
 async def r_coffin(m: types.Message, state: FSMContext):
     await state.update_data(coffin=m.text.strip().upper())
     await m.answer("Храм:"); await state.set_state(Ritual.temple)
 
-@dp.message(Ritual.temple)
+@dp.message(Ritual.temple, ~F.text.in_(MENU_BTNS))
 async def r_temple(m: types.Message, state: FSMContext):
     await state.update_data(temple=m.text.strip().upper())
     await m.answer("Кладбище:"); await state.set_state(Ritual.cemetery)
 
-@dp.message(Ritual.cemetery)
+@dp.message(Ritual.cemetery, ~F.text.in_(MENU_BTNS))
 async def r_cemetery(m: types.Message, state: FSMContext):
     await state.update_data(cemetery=m.text.strip().upper())
     await save_order(m, state)
 
-@dp.message(Ritual.temple_cremation)
+@dp.message(Ritual.temple_cremation, ~F.text.in_(MENU_BTNS))
 async def crem_temple(m: types.Message, state: FSMContext):
     await state.update_data(temple=m.text.strip().upper(), cemetery="Крематорий")
     await save_order(m, state)
@@ -651,17 +665,27 @@ async def save_order(m, state: FSMContext):
     row=f"{now},{data['event_date']},{t},{data['customer']},{data['phone']},{data['deceased']},{details},{extras},{data.get('temple','')},{data['cemetery']}"
     gh_append("ritual/orders.csv",row,"Дата_записи,Дата_события,Тип,Заказчик,Тел,Усопший,Детали,Допы,Храм,Кладбище")
 
-    # Карточки — РАЗДЕЛЬНО
+    # ДВЕ РАЗДЕЛЬНЫЕ карточки
     route = build_route(data)
-    card = build_crem_card(data) if t=="cremation" else None
+    crem_card = build_crem_card(data) if t=="cremation" else None
 
     global last_orders
-    last_orders.append({"deceased":data["deceased"],"type":t,"route":route,"card":card,"date":data.get("event_date","")})
+    last_orders.append({
+        "deceased": data["deceased"],
+        "type": t,
+        "route": route,           # Карточка водителя
+        "crem_card": crem_card,   # Карточка крематория
+        "date": data.get("event_date","")
+    })
 
+    # Показываем ОБЕ карточки отдельно
     txt = "✅ Заказ сохранён\n\n"
-    txt += "📋 ВОДИТЕЛЮ:\n" + route
-    if card: txt += "\n\n🔥 КРЕМАТОРИЙ:\n" + card
-    txt += "\n\nИспользуй 🚕 Водителю для отправки отдельно"
+    txt += "━━━━━━━━━━━━━━━\n📋 ВОДИТЕЛЮ:\n━━━━━━━━━━━━━━━\n" + route
+
+    if crem_card:
+        txt += "\n\n━━━━━━━━━━━━━━━\n🔥 КРЕМАТОРИЙ:\n━━━━━━━━━━━━━━━\n" + crem_card
+
+    txt += "\n\n📌 Используй 🚕 Водителю для отправки карточки водителю"
 
     await m.answer(txt); await state.clear()
 
@@ -679,35 +703,64 @@ def build_route(data):
     return txt
 
 def build_crem_card(data):
+    """Карточка для оформления в крематории"""
     urn=data.get('urn_type','')
     if urn=='Пластик': urn+=f" ({data.get('urn_color','')})"
     em={"box_pol":"Гроб полированный","large":"Крупное тело","hall":"Зал+отпевание","urgent":"Срочная"}
     er=[em.get(e,e) for e in data.get("extras",[])]
-    et="; ".join(er) if er else "НЕТ"
-    return f"🔥 КРЕМАЦИЯ\nУсопший: {data['deceased']}\nУрна: {urn}\nДопы: {et}\n\nВсе стандартно, оплата наличными, оформлю в день кремации."
+    et="; ".join(er) if er else "Нет"
+    
+    return (
+        f"🔥 КРЕМАЦИЯ — ОФОРМЛЕНИЕ\n"
+        f"Дата: {data.get('event_date','')}\n"
+        f"Усопший: {data['deceased']}\n"
+        f"Урна: {urn}\n"
+        f"Доп. услуги: {et}\n"
+        f"Храм: {data.get('temple','Крематорий')}\n\n"
+        f"Все стандартно, оплата наличными,\n"
+        f"оформлю в день кремации."
+    )
 
 # ============================================================
-# ВОДИТЕЛЮ — ВЫБОР ЗАКАЗА
+# ВОДИТЕЛЮ И КРЕМАТОРИЙ — ВЫБОР
 # ============================================================
 @dp.message(F.text == "🚕 Водителю")
 async def driver_route(m: types.Message, state: FSMContext):
     if not last_orders:
         await m.answer("⚠️ Нет заказов."); return
     if len(last_orders)==1:
-        await m.answer(last_orders[0]["route"]); return
+        o = last_orders[0]
+        # Показываем кнопки выбора
+        await m.answer(f"📋 Заказ: {o['deceased']}\n\nЧто отправить?", reply_markup=kb_order_actions(0))
+        return
     # Несколько заказов — выбор
     await m.answer("Выбери заказ:", reply_markup=kb_order_select(last_orders))
-    await state.set_state(Morg.closing) # Временно используем
+    await state.set_state(Morg.closing)
 
 @dp.callback_query(F.data.startswith("sel_ord_"))
-async def send_order(cb: types.CallbackQuery, state: FSMContext):
+async def select_order(cb: types.CallbackQuery, state: FSMContext):
+    i = int(cb.data.split("_")[2])
+    o = last_orders[i]
+    await cb.message.edit_text(f"📋 {o['deceased']} ({o['date']})\n\nЧто отправить?", reply_markup=kb_order_actions(i))
+    await cb.answer()
+
+@dp.callback_query(F.data.startswith("send_driver_"))
+async def send_driver(cb: types.CallbackQuery):
     i = int(cb.data.split("_")[2])
     if i < len(last_orders):
-        o = last_orders[i]
-        txt = o["route"]
-        if o["card"]: txt += "\n\n" + o["card"]
-        await cb.message.answer(txt)
-    await cb.answer()
+        await cb.message.answer(last_orders[i]["route"])
+    await cb.answer("Карточка водителя скопирована")
+
+@dp.callback_query(F.data.startswith("send_crem_"))
+async def send_crem(cb: types.CallbackQuery):
+    i = int(cb.data.split("_")[2])
+    if i < len(last_orders):
+        card = last_orders[i].get("crem_card")
+        if card:
+            await cb.message.answer(card)
+        else:
+            await cb.message.answer("⚠️ Это не кремация")
+    await cb.answer("Карточка крематория скопирована")
 
 @dp.message(F.text == "📊 Отчёт")
 async def report_menu(m: types.Message):
