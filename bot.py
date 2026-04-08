@@ -511,7 +511,7 @@ async def show_calc(m, bodies, state):
                     else:
                         s=cfg["nonstd_sanitar"]; t=cfg["nonstd_transport"]; inc=cfg["nonstd_income"]
                     san+=s; trn+=t; income+=inc
-                    txt += f"{i}. {b['surname']} — {s}({b['type'][:3]})\n"
+                    txt += f"{i}. {b['surname']} — {s}\n"
                 else:
                     txt += f"{i}. {b['surname']} → {b.get('org','НЕ УКАЗАНО')}\n"
 
@@ -519,14 +519,7 @@ async def show_calc(m, bodies, state):
     if cfg["has_transport"]: txt += f"\n🚚 Перевозка: {trn}₽"
     if cfg["has_income"]: txt += f"\n💰 Доход: {income}₽"
 
-    # Прибыль
-    if cfg["has_income"]:
-        profit = income - san - trn
-        txt += f"\n✅ Прибыль: {profit}₽"
-    else:
-        txt += f"\n💸 Расход: {san+trn}₽"
-
-    # Проверяем заказы за сегодня
+    # З/П агента из заказов за сегодня
     today_str = datetime.now().strftime("%Y-%m-%d")
     agent_sal = 0
     content = read_file("ritual/orders.csv")
@@ -536,7 +529,16 @@ async def show_calc(m, bodies, state):
             if len(p)>=8 and p[0].startswith(today_str):
                 try: agent_sal += int(p[7].strip())
                 except: pass
+    
     if agent_sal: txt += f"\n👤 Агент з/п: {agent_sal}₽"
+
+    # Прибыль / Расход
+    total_expense = san + trn + agent_sal
+    if cfg["has_income"]:
+        profit = income - total_expense
+        txt += f"\n✅ Прибыль: {profit}₽"
+    else:
+        txt += f"\n💸 Расход: {total_expense}₽"
 
     lines = ["Фамилия,Тип,Источник,Оплачено,Организация"]
     for b in bodies:
@@ -553,11 +555,22 @@ async def show_calc(m, bodies, state):
 @dp.message(F.text == "📋 Смена за сегодня")
 async def today_report(m: types.Message):
     today = datetime.now(); ym=today.strftime("%Y-%m"); d=today.strftime("%Y-%m-%d")
-    txt=""; ts=0; tt=0; tb=0; ti=0
+    txt=""
+    
+    # Зарплата агента за сегодня
+    agent_sal = 0
+    content = read_file("ritual/orders.csv")
+    if content:
+        for line in content.strip().split("\n")[1:]:
+            p = line.split(",")
+            if len(p)>=8 and p[0].startswith(d):
+                try: agent_sal += int(p[7].strip())
+                except: pass
+
     for loc,cfg in MORG_CONFIG.items():
         content = read_file(f"morg/{loc}/{ym}/{d}.csv")
+        lb=0; ls=0; lt=0
         if content:
-            ls=0;lt=0;lb=0;li=0
             for line in content.strip().split("\n")[1:]:
                 p=line.split(",")
                 if len(p)<5: continue
@@ -566,18 +579,25 @@ async def today_report(m: types.Message):
                     std = p[1].strip()=="Стандарт"
                     s = cfg["standard_sanitar"] if std else cfg["nonstd_sanitar"]
                     t = cfg["standard_transport"] if std else cfg["nonstd_transport"]
-                    inc = cfg["standard_income"] if std else cfg["nonstd_income"]
-                    ls+=s; lt+=t; li+=inc
-            ts+=ls; tt+=lt; tb+=lb; ti+=li
-            profit = li-ls-lt if cfg["has_income"] else -(ls+lt)
-            txt += f"🏥 {cfg['name']}: {lb} тел | 💰 {ls}₽ сан."
-            if cfg["has_transport"]: txt += f" | 🚚 {lt}₽ пер."
-            if cfg["has_income"]: txt += f" | 💵 {li}₽ дох."
-            txt += f" | {'+' if profit>=0 else ''}{profit}₽\n\n"
-    if not txt: txt="Смен за сегодня нет.\n\n"
-    txt += f"📊 ИТОГО:\nВсего тел: {tb}\nСанитары: {ts}₽\n"
-    if any(c["has_transport"] for c in MORG_CONFIG.values()): txt += f"Перевозка: {tt}₽\n"
-    txt += f"Доход: {ti}₽"
+                    ls+=s; lt+=t
+        
+        txt += f"🏥 {cfg['name']}\n"
+        txt += f"Тел: {lb}\n"
+        txt += f"🧑‍⚕️ Санитары: {ls}₽\n"
+        if cfg["has_transport"]: txt += f"🚚 Перевозка: {lt}₽\n"
+        txt += f"👤 Агент з/п: {agent_sal}₽\n"
+        if cfg["has_income"]:
+            inc = 0
+            if content:
+                for line in content.strip().split("\n")[1:]:
+                    p=line.split(",")
+                    if len(p)<5: continue
+                    if p[3].strip().upper() in ("ДА","YES","TRUE","1"):
+                        inc += cfg["standard_income"] if p[1].strip()=="Стандарт" else cfg["nonstd_income"]
+            txt += f"💰 Доход: {inc}₽\n"
+        txt += f"{'─'*15}\n\n"
+    
+    if not txt: txt = "Смен за сегодня нет."
     await m.answer(txt)
 
 # ============================================================
