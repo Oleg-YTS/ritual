@@ -16,6 +16,6 @@ services:
       - key: WEBHOOK_PATH
         value: /webhook
       - key: WEBHOOK_SECRET
-        generateValue: true
+        value: renderRitual2026
       - key: PORT
         value: "10000"
