@@ -149,6 +149,16 @@ class MorgueStorage(JSONStorage):
                     return True
         return False
     
+    def update_shift(self, shift_id: str, updated_shift: Dict[str, Any]):
+        """Обновить конкретную смену в файле (сохраняя остальные)"""
+        data = self.read()
+        for i, shift in enumerate(data.get("shifts", [])):
+            if shift["shift_id"] == shift_id:
+                data["shifts"][i] = updated_shift
+                self.write(data)
+                return True
+        return False
+
     def close_shift(self, shift_id: str, closed_by: int, closed_by_name: str):
         data = self.read()
         for shift in data.get("shifts", []):

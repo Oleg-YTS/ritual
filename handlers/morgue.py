@@ -324,7 +324,7 @@ async def rm_reason_bsme(cb: types.CallbackQuery, state: FSMContext):
         if real_i is not None:
             bodies[real_i]["removed"] = True
             bodies[real_i]["removed_reason"] = "БСМЭ"
-            db.write(shift)
+            db.update_shift(shift["shift_id"], shift)
 
     await cb.message.edit_text("✅ Тело удалено. Причина: БСМЭ")
     await cb.answer()
@@ -351,7 +351,7 @@ async def rm_custom_reason(message: types.Message, state: FSMContext):
         if real_i is not None:
             bodies[real_i]["removed"] = True
             bodies[real_i]["removed_reason"] = reason
-            db.write(shift)
+            db.update_shift(shift["shift_id"], shift)
 
     await message.answer(f"✅ Тело удалено. Причина: {reason}")
     await state.clear()
@@ -417,7 +417,7 @@ async def toggle_pay(cb: types.CallbackQuery, state: FSMContext):
         real_i = find_real_index(bodies, idx)
         if real_i is not None:
             bodies[real_i]["paid"] = not bodies[real_i].get("paid", False)
-            db.write(shift)
+            db.update_shift(shift["shift_id"], shift)
             active = [b for b in bodies if not b.get("removed")]
 
     await cb.message.edit_reply_markup(reply_markup=kb_payment_status(active))
@@ -462,7 +462,7 @@ async def org_input(message: types.Message, state: FSMContext):
         real_i = find_real_index(bodies, idx)
         if real_i is not None:
             bodies[real_i]["organization"] = org
-            db.write(shift)
+            db.update_shift(shift["shift_id"], shift)
 
     unpaid = [b for b in active if not b.get("paid") and not b.get("organization")]
     if unpaid:
