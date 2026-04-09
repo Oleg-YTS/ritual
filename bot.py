@@ -1411,22 +1411,36 @@ async def handle_unknown_message(message: types.Message):
 # ЗАПУСК БОТА
 # ============================================================
 async def on_startup():
-    """Установка webhook при запуске"""
+    """Установка webhook при запуске с повторными попытками"""
     url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
     host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
-    
+
     if not url and host:
         url = f"https://{host}"
-    
+
     if not url:
         logger.warning("Webhook URL не установлен. Бот не будет получать обновления через webhook.")
         return
-    
+
     webhook_url = f"{url}{WEBHOOK_PATH}"
     secret = WEBHOOK_SECRET if WEBHOOK_SECRET else None
-    
-    await bot.set_webhook(webhook_url, secret_token=secret)
-    logger.info(f"✅ Webhook установлен: {webhook_url}")
+
+    # Retry при DNS-ошибках (Render иногда тупит при старте)
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            await bot.set_webhook(webhook_url, secret_token=secret)
+            logger.info(f"✅ Webhook установлен: {webhook_url}")
+            return
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait = 5 * (attempt + 1)
+                logger.warning(f"⚠️ Webhook не установлен (попытка {attempt+1}/{max_retries}): {e}")
+                logger.info(f"⏳ Повторная попытка через {wait} сек...")
+                await asyncio.sleep(wait)
+            else:
+                logger.error(f"❌ Не удалось установить webhook после {max_retries} попыток: {e}")
+                logger.warning("⚠️ Бот запущен, но webhook не установлен. Проверьте сеть.")
 
 
 def create_app() -> web.Application:
