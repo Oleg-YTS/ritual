@@ -436,6 +436,9 @@ async def start_close_shift(message: types.Message, state: FSMContext):
         await message.answer("⚠️ У вас нет прав для закрытия смены.")
         return
 
+    # Сбрасываем любое предыдущее состояние
+    await state.clear()
+
     user_morgue = get_user_morgue(telegram_id)
 
     if user_morgue:
@@ -455,6 +458,7 @@ async def start_close_shift(message: types.Message, state: FSMContext):
 async def select_morgue_for_close(callback: types.CallbackQuery, state: FSMContext):
     """Выбор морга для закрытия смены"""
     morgue_id = "morgue1" if callback.data == "close_morgue1" else "morgue2"
+    await state.clear()
     await callback.answer()
     await start_shift_closing(callback.message, morgue_id, state)
 
