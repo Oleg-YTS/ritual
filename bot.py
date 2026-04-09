@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Импорт локальных модулей
 sys.path.insert(0, os.path.dirname(__file__))
 from database.storage import UsersStorage, MorgueStorage
+from database.github_backup import gh_backup
 from keyboards.menus import *
 from utils.reports import MORGUE_CONFIG, calculate_shift_finances, format_shift_report
 from utils.reports import build_driver_card, build_crematorium_card
@@ -678,22 +679,31 @@ async def close_shift_final(message, morgue_id: str, shift_id: str, state: FSMCo
     """Финальное закрытие смены"""
     db = MORGUE_DBS[morgue_id]
     shift = db.get_active_shift()
-    
+
     if not shift:
         await message.answer("⚠️ Смена не найдена.")
         return
-    
+
     # Сохраняем зарплату агента
     shift["agent_salary"] = agent_salary
-    
+
     # Закрываем смену
     user_name = get_user_name(message.from_user.id)
     db.close_shift(shift_id, message.from_user.id, user_name)
-    
+
+    # БЭКАП В GITHUB
+    backup_ok = gh_backup.backup_shift(shift, morgue_id)
+
     # Формируем отчёт
     report = format_shift_report(shift)
-    
+
     await message.answer(report)
+
+    if backup_ok:
+        await message.answer("✅ Данные смены сохранены в GitHub (бэкап)")
+    else:
+        await message.answer("⚠️ Бэкап в GitHub не выполнен (проверьте GITHUB_TOKEN)")
+
     await state.clear()
 
 
