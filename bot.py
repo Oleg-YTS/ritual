@@ -82,6 +82,7 @@ class RemovalFSM(StatesGroup):
 
 class ClosingFSM(StatesGroup):
     """Состояния для закрытия смены"""
+    select_morgue = State()
     payment_mark = State()
     org_input = State()
     agent_salary = State()
@@ -430,34 +431,32 @@ async def input_custom_removal_reason(message: types.Message, state: FSMContext)
 async def start_close_shift(message: types.Message, state: FSMContext):
     """Начало закрытия смены"""
     telegram_id = message.from_user.id
-    
+
     if not check_permission(telegram_id, "close_shift"):
         await message.answer("⚠️ У вас нет прав для закрытия смены.")
         return
-    
+
     user_morgue = get_user_morgue(telegram_id)
-    
+
     if user_morgue:
         await start_shift_closing(message, user_morgue, state)
     else:
-        await message.answer("Выберите морг для закрытия смены:", reply_markup=kb_select_morgue())
-        await state.update_data(action="close_shift")
-        await state.set_state(BodyFSM.select_morgue)
+        await message.answer(
+            "Выберите морг для закрытия смены:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="close_morgue1")],
+                [InlineKeyboardButton(text="🏥 Мира 11", callback_data="close_morgue2")]
+            ])
+        )
+        await state.set_state(ClosingFSM.select_morgue)
 
 
-@dp.callback_query(F.data.in_(["morgue1", "morgue2"]))
-async def select_morgue_for_action(callback: types.CallbackQuery, state: FSMContext):
-    """Выбор морга для различных действий"""
-    morgue_id = callback.data
-    data = await state.get_data()
-    action = data.get("action")
-    
-    if action == "close_shift":
-        await callback.answer()
-        await start_shift_closing(callback.message, morgue_id, state)
-    else:
-        await callback.answer()
-        await state.clear()
+@dp.callback_query(F.data.in_(["close_morgue1", "close_morgue2"]), ClosingFSM.select_morgue)
+async def select_morgue_for_close(callback: types.CallbackQuery, state: FSMContext):
+    """Выбор морга для закрытия смены"""
+    morgue_id = "morgue1" if callback.data == "close_morgue1" else "morgue2"
+    await callback.answer()
+    await start_shift_closing(callback.message, morgue_id, state)
 
 
 async def start_shift_closing(message, morgue_id: str, state: FSMContext):
