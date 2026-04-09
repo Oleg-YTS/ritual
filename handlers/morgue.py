@@ -1,13 +1,12 @@
 """
 БЛОК 1: МОРГ — добавление тел, удаление, закрытие смены
-Полностью независимый роутер
+Цикличное добавление: тело → сразу фамилия → тело → ... → кнопка меню → стоп
 """
 
 import os
 import sys
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
@@ -25,6 +24,15 @@ logger = logging.getLogger(__name__)
 router = Router(name="morgue")
 
 # ============================================================
+# КОНСТАНТЫ
+# ============================================================
+MENU_BUTTONS = [
+    "➕ Добавить тело", "🔒 Закрыть смену", "🗑️ Удалить тело",
+    "🕯️ Ритуальный заказ", "📋 Мои заказы", "📊 Отчёт за период",
+    "🚗 Кто вывез", "📈 Статистика", "👥 Пользователи"
+]
+
+# ============================================================
 # ХРАНИЛИЩА
 # ============================================================
 users_db = UsersStorage()
@@ -33,97 +41,78 @@ morgue2_db = MorgueStorage("morgue2")
 MORGUE_DBS = {"morgue1": morgue1_db, "morgue2": morgue2_db}
 
 # ============================================================
-# КЛАВИАТУРЫ (локальные, только для этого блока)
+# КЛАВИАТУРЫ
 # ============================================================
 
-def kb_main_menu(role: str) -> ReplyKeyboardBuilder:
-    builder = ReplyKeyboardBuilder()
-    builder.row(KeyboardButton(text="➕ Добавить тело"))
+def kb_main_menu(role: str):
+    b = ReplyKeyboardBuilder()
+    b.row(KeyboardButton(text="➕ Добавить тело"))
     if role in ["admin", "manager_morg1", "manager_morg2"]:
-        builder.row(KeyboardButton(text="🔒 Закрыть смену"))
-        builder.row(KeyboardButton(text="🗑️ Удалить тело"))
-    if role in ["admin", "manager_morg1", "manager_morg2", "agent_morg1", "agent_morg2"]:
-        builder.row(KeyboardButton(text="🕯️ Ритуальный заказ"))
-        builder.row(KeyboardButton(text="📋 Мои заказы"))
+        b.row(KeyboardButton(text="🔒 Закрыть смену"))
+        b.row(KeyboardButton(text="🗑️ Удалить тело"))
+    b.row(KeyboardButton(text="🕯️ Ритуальный заказ"))
+    b.row(KeyboardButton(text="📋 Мои заказы"))
     if role in ["admin", "manager_morg1", "manager_morg2"]:
-        builder.row(KeyboardButton(text="📊 Отчёт за период"))
-        builder.row(KeyboardButton(text="🚗 Кто вывез"))
+        b.row(KeyboardButton(text="📊 Отчёт за период"))
+        b.row(KeyboardButton(text="🚗 Кто вывез"))
     if role == "admin":
-        builder.row(KeyboardButton(text="📈 Статистика"))
-        builder.row(KeyboardButton(text="👥 Пользователи"))
-    return builder.as_markup(resize_keyboard=True)
+        b.row(KeyboardButton(text="📈 Статистика"))
+        b.row(KeyboardButton(text="👥 Пользователи"))
+    return b.as_markup(resize_keyboard=True)
 
-
-def kb_select_morgue_add() -> types.InlineKeyboardMarkup:
-    """Выбор морга для добавления тела"""
+def kb_select_morgue_add():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="add_m1")],
         [InlineKeyboardButton(text="🏥 Мира 11", callback_data="add_m2")]
     ])
 
-
-def kb_select_morgue_close() -> types.InlineKeyboardMarkup:
-    """Выбор морга для закрытия смены"""
+def kb_select_morgue_close():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="close_m1")],
         [InlineKeyboardButton(text="🏥 Мира 11", callback_data="close_m2")]
     ])
 
-
-def kb_select_morgue_remove() -> types.InlineKeyboardMarkup:
-    """Выбор морга для удаления тела"""
+def kb_select_morgue_remove():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="rm_m1")],
         [InlineKeyboardButton(text="🏥 Мира 11", callback_data="rm_m2")]
     ])
 
-
-def kb_body_type() -> types.InlineKeyboardMarkup:
+def kb_body_type():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Стандарт", callback_data="btype_std")],
         [InlineKeyboardButton(text="Не стандарт", callback_data="btype_nstd")]
     ])
 
-
-def kb_body_source() -> types.InlineKeyboardMarkup:
+def kb_body_source():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Стационар", callback_data="bsrc_stat")],
         [InlineKeyboardButton(text="Амбулаторно", callback_data="bsrc_amb")]
     ])
 
-
-def kb_payment_status(bodies: list) -> types.InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
+def kb_payment_status(bodies: list):
+    b = InlineKeyboardBuilder()
     for i, body in enumerate(bodies):
         status = "✅" if body.get("paid") else "❌"
-        builder.row(InlineKeyboardButton(
-            text=f"{status} {body['surname']}",
-            callback_data=f"pay_{i}"
-        ))
-    builder.row(InlineKeyboardButton(text="💰 РАССЧИТАТЬ", callback_data="calc_done"))
-    return builder.as_markup()
+        b.row(InlineKeyboardButton(text=f"{status} {body['surname']}", callback_data=f"pay_{i}"))
+    b.row(InlineKeyboardButton(text="💰 РАССЧИТАТЬ", callback_data="calc_done"))
+    return b.as_markup()
 
-
-def kb_removal_reason() -> types.InlineKeyboardMarkup:
+def kb_removal_reason():
     return types.InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="БСМЭ", callback_data="rmreason_bsme")],
         [InlineKeyboardButton(text="Другая причина", callback_data="rmreason_other")]
     ])
 
-
-def kb_bodies_for_removal(bodies: list) -> types.InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
+def kb_bodies_for_removal(bodies: list):
+    b = InlineKeyboardBuilder()
     for i, body in enumerate(bodies):
-        if body.get("removed"):
-            continue
-        builder.row(InlineKeyboardButton(
-            text=f"🗑️ {body['surname']}",
-            callback_data=f"rm_body_{i}"
-        ))
-    return builder.as_markup()
+        if body.get("removed"): continue
+        b.row(InlineKeyboardButton(text=f"🗑️ {body['surname']}", callback_data=f"rm_body_{i}"))
+    return b.as_markup()
 
 # ============================================================
-# FSM СОСТОЯНИЯ
+# FSM
 # ============================================================
 
 class AddBodyFSM(StatesGroup):
@@ -133,40 +122,33 @@ class AddBodyFSM(StatesGroup):
     source = State()
 
 class CloseShiftFSM(StatesGroup):
-    select_morgue = State()
     payment = State()
     org_input = State()
     agent_salary = State()
 
 class RemoveBodyFSM(StatesGroup):
-    select_morgue = State()
     reason = State()
     custom_reason = State()
 
 # ============================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ВСПОМОГАТЕЛЬНЫЕ
 # ============================================================
 
-def get_user(telegram_id: int) -> Optional[dict]:
-    return users_db.get_user(telegram_id)
+def get_user(tid):
+    return users_db.get_user(tid)
 
-def get_user_morgue(telegram_id: int) -> Optional[str]:
-    role = get_user(telegram_id)
-    if not role:
-        return None
+def get_user_morgue(tid):
+    role = get_user(tid)
+    if not role: return None
     r = role.get("role", "")
-    if r == "admin":
-        return None
-    if "morg1" in r:
-        return "morgue1"
-    if "morg2" in r:
-        return "morgue2"
+    if r == "admin": return None
+    if "morg1" in r: return "morgue1"
+    if "morg2" in r: return "morgue2"
     return None
 
-def check_perm(telegram_id: int, action: str) -> bool:
-    user = get_user(telegram_id)
-    if not user:
-        return False
+def check_perm(tid, action):
+    user = get_user(tid)
+    if not user: return False
     role = user.get("role", "")
     perms = {
         "admin": ["add", "remove", "close", "stats", "report", "removed", "order", "cards", "users"],
@@ -177,34 +159,40 @@ def check_perm(telegram_id: int, action: str) -> bool:
     }
     return action in perms.get(role, [])
 
-def get_or_create_shift(telegram_id: int, morgue_id: str) -> dict:
+def get_or_create_shift(tid, morgue_id):
     db = MORGUE_DBS[morgue_id]
     shift = db.get_active_shift()
     if not shift:
-        user = get_user(telegram_id)
+        user = get_user(tid)
         name = user.get("name", "Unknown") if user else "Unknown"
-        shift = db.create_shift(telegram_id, name)
+        shift = db.create_shift(tid, name)
+        logger.info(f"Автосмена {shift['shift_id']} в {morgue_id}")
     return shift
 
+def find_real_index(bodies, active_index):
+    """Найти реальный индекс тела в списке по индексу активных (без removed)"""
+    ctr = 0
+    for i, b in enumerate(bodies):
+        if not b.get("removed"):
+            if ctr == active_index:
+                return i
+            ctr += 1
+    return None
+
 # ============================================================
-# /start — ГЛАВНОЕ МЕНЮ
+# /start
 # ============================================================
 
 @router.message(F.text == "/start")
 async def cmd_start(message: types.Message):
     user = get_user(message.from_user.id)
     if not user:
-        await message.answer(
-            f"⚠️ Вас нет в списке.\nID: {message.from_user.id}\nОбратитесь к админу."
-        )
+        await message.answer(f"⚠️ Вас нет в списке.\nID: {message.from_user.id}")
         return
-
-    role = user["role"]
-    name = user["name"]
-    await message.answer(f"👋 {name}\nМеню:", reply_markup=kb_main_menu(role))
+    await message.answer(f"👋 {user['name']}\nМеню:", reply_markup=kb_main_menu(user["role"]))
 
 # ============================================================
-# ДОБАВЛЕНИЕ ТЕЛА
+# ДОБАВЛЕНИЕ ТЕЛА (цикличное)
 # ============================================================
 
 @router.message(F.text == "➕ Добавить тело")
@@ -231,7 +219,8 @@ async def add_select_morgue(cb: types.CallbackQuery, state: FSMContext):
     await cb.answer()
     await state.set_state(AddBodyFSM.surname)
 
-@router.message(AddBodyFSM.surname)
+# ~F.text.in_(MENU_BUTTONS) — не ловим кнопки меню как фамилии
+@router.message(AddBodyFSM.surname, ~F.text.in_(MENU_BUTTONS))
 async def add_surname(message: types.Message, state: FSMContext):
     surname = message.text.strip().upper()
     if not surname:
@@ -253,6 +242,7 @@ async def add_source(cb: types.CallbackQuery, state: FSMContext):
     src = "stat" if cb.data == "bsrc_stat" else "amb"
     data = await state.get_data()
     mid = data["morgue_id"]
+    tid = cb.from_user.id
 
     body = {
         "surname": data["surname"],
@@ -263,18 +253,18 @@ async def add_source(cb: types.CallbackQuery, state: FSMContext):
         "organization": ""
     }
 
-    shift = get_or_create_shift(cb.from_user.id, mid)
+    shift = get_or_create_shift(tid, mid)
     db = MORGUE_DBS[mid]
     db.add_body(shift["shift_id"], body)
 
     src_name = "Стационар" if src == "stat" else "Амбулаторно"
-    await cb.message.edit_text(f"✅ {body['surname']} ({src_name}) добавлен(а)")
+    total = len([b for b in shift["bodies"] if not b.get("removed")])
+    await cb.message.edit_text(f"✅ {body['surname']} ({src_name}) — добавлен(а)\nТел в смене: {total}")
     await cb.answer()
-    await state.clear()
 
-    user = get_user(cb.from_user.id)
-    role = user["role"] if user else "admin"
-    await cb.message.answer("Далее:", reply_markup=kb_main_menu(role))
+    # ЦИКЛ: сразу следующая фамилия, без меню
+    await cb.message.answer("Фамилия:")
+    await state.set_state(AddBodyFSM.surname)
 
 # ============================================================
 # УДАЛЕНИЕ ТЕЛА
@@ -292,9 +282,9 @@ async def start_remove_body(message: types.Message, state: FSMContext):
         await _show_bodies_for_removal(message, user_morgue, state)
     else:
         await message.answer("Морг:", reply_markup=kb_select_morgue_remove())
-        await state.set_state(RemoveBodyFSM.select_morgue)
+        await state.set_state(RemoveBodyFSM.reason)
 
-@router.callback_query(F.data.in_(["rm_m1", "rm_m2"]), RemoveBodyFSM.select_morgue)
+@router.callback_query(F.data.in_(["rm_m1", "rm_m2"]))
 async def rm_select_morgue(cb: types.CallbackQuery, state: FSMContext):
     mid = "morgue1" if cb.data == "rm_m1" else "morgue2"
     await cb.answer()
@@ -323,34 +313,24 @@ async def rm_select_body(cb: types.CallbackQuery, state: FSMContext):
     await cb.answer()
     await state.set_state(RemoveBodyFSM.reason)
 
-@router.callback_query(F.data == "rmreason_bsme", RemoveBodyFSM.reason)
+@router.callback_query(F.data == "rmreason_bsme")
 async def rm_reason_bsme(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     db = MORGUE_DBS[data["morgue_id"]]
     shift = db.get_active_shift()
     if shift:
         bodies = shift["bodies"]
-        active = [b for b in bodies if not b.get("removed")]
-        bi = data["body_index"]
-        if bi < len(active):
-            # Найти реальный индекс
-            real_i = None
-            ctr = 0
-            for i, b in enumerate(bodies):
-                if not b.get("removed"):
-                    if ctr == bi:
-                        real_i = i; break
-                    ctr += 1
-            if real_i is not None:
-                bodies[real_i]["removed"] = True
-                bodies[real_i]["removed_reason"] = "БСМЭ"
-                db.write(shift)
+        real_i = find_real_index(bodies, data["body_index"])
+        if real_i is not None:
+            bodies[real_i]["removed"] = True
+            bodies[real_i]["removed_reason"] = "БСМЭ"
+            db.write(shift)
 
     await cb.message.edit_text("✅ Тело удалено. Причина: БСМЭ")
     await cb.answer()
     await state.clear()
 
-@router.callback_query(F.data == "rmreason_other", RemoveBodyFSM.reason)
+@router.callback_query(F.data == "rmreason_other")
 async def rm_reason_other(cb: types.CallbackQuery, state: FSMContext):
     await cb.message.edit_text("Введите причину:")
     await cb.answer()
@@ -367,27 +347,14 @@ async def rm_custom_reason(message: types.Message, state: FSMContext):
     shift = db.get_active_shift()
     if shift:
         bodies = shift["bodies"]
-        active = [b for b in bodies if not b.get("removed")]
-        bi = data["body_index"]
-        if bi < len(active):
-            real_i = None
-            ctr = 0
-            for i, b in enumerate(bodies):
-                if not b.get("removed"):
-                    if ctr == bi:
-                        real_i = i; break
-                    ctr += 1
-            if real_i is not None:
-                bodies[real_i]["removed"] = True
-                bodies[real_i]["removed_reason"] = reason
-                db.write(shift)
+        real_i = find_real_index(bodies, data["body_index"])
+        if real_i is not None:
+            bodies[real_i]["removed"] = True
+            bodies[real_i]["removed_reason"] = reason
+            db.write(shift)
 
     await message.answer(f"✅ Тело удалено. Причина: {reason}")
     await state.clear()
-
-    user = get_user(message.from_user.id)
-    role = user["role"] if user else "admin"
-    await message.answer("Далее:", reply_markup=kb_main_menu(role))
 
 # ============================================================
 # ЗАКРЫТИЕ СМЕНЫ
@@ -404,10 +371,7 @@ async def start_close_shift(message: types.Message, state: FSMContext):
     if user_morgue:
         await _do_close_shift(message, user_morgue, state)
     else:
-        await message.answer(
-            "Морг для закрытия:",
-            reply_markup=kb_select_morgue_close()
-        )
+        await message.answer("Морг для закрытия:", reply_markup=kb_select_morgue_close())
 
 @router.callback_query(F.data == "close_m1")
 async def do_close_m1(cb: types.CallbackQuery, state: FSMContext):
@@ -450,19 +414,11 @@ async def toggle_pay(cb: types.CallbackQuery, state: FSMContext):
 
     if shift:
         bodies = shift["bodies"]
-        active = [b for b in bodies if not b.get("removed")]
-        if idx < len(active):
-            real_i = None
-            ctr = 0
-            for i, b in enumerate(bodies):
-                if not b.get("removed"):
-                    if ctr == idx:
-                        real_i = i; break
-                    ctr += 1
-            if real_i is not None:
-                bodies[real_i]["paid"] = not bodies[real_i].get("paid", False)
-                db.write(shift)
-                active = [b for b in bodies if not b.get("removed")]
+        real_i = find_real_index(bodies, idx)
+        if real_i is not None:
+            bodies[real_i]["paid"] = not bodies[real_i].get("paid", False)
+            db.write(shift)
+            active = [b for b in bodies if not b.get("removed")]
 
     await cb.message.edit_reply_markup(reply_markup=kb_payment_status(active))
     await cb.answer()
@@ -503,19 +459,11 @@ async def org_input(message: types.Message, state: FSMContext):
         bodies = shift["bodies"]
         active = [b for b in bodies if not b.get("removed")]
         idx = data.get("unpaid_index", 0)
-        if idx < len(active):
-            real_i = None
-            ctr = 0
-            for i, b in enumerate(bodies):
-                if not b.get("removed"):
-                    if ctr == idx:
-                        real_i = i; break
-                    ctr += 1
-            if real_i is not None:
-                bodies[real_i]["organization"] = org
-                db.write(shift)
+        real_i = find_real_index(bodies, idx)
+        if real_i is not None:
+            bodies[real_i]["organization"] = org
+            db.write(shift)
 
-    # Проверяем следующие неоплаченные
     unpaid = [b for b in active if not b.get("paid") and not b.get("organization")]
     if unpaid:
         next_unpaid = unpaid[0]
@@ -537,14 +485,9 @@ async def _finish_close(message, morgue_id: str, shift_id: str, state: FSMContex
     name = user.get("name", "Unknown") if user else "Unknown"
     db.close_shift(shift_id, message.from_user.id, name)
 
-    # GitHub бэкап
-    backup_ok = gh_backup.backup_shift(shift, morgue_id)
+    # Тихий бэкап в GitHub
+    gh_backup.backup_shift(shift, morgue_id)
 
     report = format_shift_report(shift)
     await message.answer(report)
-
-    if backup_ok:
-        await message.answer("✅ Бэкап в GitHub сохранён")
-
     await state.clear()
-    await message.answer("Далее:", reply_markup=kb_main_menu(user["role"] if user else "admin"))
