@@ -82,7 +82,6 @@ class RemovalFSM(StatesGroup):
 
 class ClosingFSM(StatesGroup):
     """Состояния для закрытия смены"""
-    select_morgue = State()
     payment_mark = State()
     org_input = State()
     agent_salary = State()
@@ -436,56 +435,57 @@ async def start_close_shift(message: types.Message, state: FSMContext):
         await message.answer("⚠️ У вас нет прав для закрытия смены.")
         return
 
-    # Сбрасываем любое предыдущее состояние
     await state.clear()
-
     user_morgue = get_user_morgue(telegram_id)
 
     if user_morgue:
-        await start_shift_closing(message, user_morgue, state)
+        await _do_close_shift(message, user_morgue, state)
     else:
         await message.answer(
             "Выберите морг для закрытия смены:",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="close_morgue1")],
-                [InlineKeyboardButton(text="🏥 Мира 11", callback_data="close_morgue2")]
+                [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="do_close_m1")],
+                [InlineKeyboardButton(text="🏥 Мира 11", callback_data="do_close_m2")]
             ])
         )
-        await state.set_state(ClosingFSM.select_morgue)
 
 
-@dp.callback_query(F.data.in_(["close_morgue1", "close_morgue2"]), ClosingFSM.select_morgue)
-async def select_morgue_for_close(callback: types.CallbackQuery, state: FSMContext):
-    """Выбор морга для закрытия смены"""
-    morgue_id = "morgue1" if callback.data == "close_morgue1" else "morgue2"
-    await state.clear()
+@dp.callback_query(F.data == "do_close_m1")
+async def do_close_morgue1(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    await start_shift_closing(callback.message, morgue_id, state)
+    await state.clear()
+    await _do_close_shift(callback.message, "morgue1", state)
 
 
-async def start_shift_closing(message, morgue_id: str, state: FSMContext):
-    """Начало процесса закрытия смены"""
+@dp.callback_query(F.data == "do_close_m2")
+async def do_close_morgue2(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.clear()
+    await _do_close_shift(callback.message, "morgue2", state)
+
+
+async def _do_close_shift(message, morgue_id: str, state: FSMContext):
+    """Внутренняя функция закрытия смены"""
     db = MORGUE_DBS[morgue_id]
     shift = db.get_active_shift()
-    
+
     if not shift:
         await message.answer("⚠️ Нет активной смены для закрытия.")
         return
-    
+
     if not shift.get("bodies"):
         await message.answer("⚠️ В смене нет тел. Добавьте хотя бы одно тело перед закрытием.")
         return
-    
-    await state.update_data(morgue_id=morgue_id, shift_id=shift["shift_id"])
-    
-    # Показываем список для отметки оплаты
+
     bodies = shift["bodies"]
     active_bodies = [b for b in bodies if not b.get("removed")]
-    
+
     if not active_bodies:
         await message.answer("⚠️ Все тела удалены. Невозможно закрыть смену.")
         return
-    
+
+    await state.update_data(morgue_id=morgue_id, shift_id=shift["shift_id"])
+
     await message.answer(
         f"📋 {MORGUE_CONFIG[morgue_id]['name']} — Отметка оплаты:\n"
         f"Нажмите на фамилию для переключения статуса оплаты.",
