@@ -26,17 +26,30 @@ class GitHubBackup:
         self.repo_name = os.getenv("REPO_NAME", "")
         self.enabled = bool(self.token and self.repo_name and GITHUB_AVAILABLE)
         self.repo = None
+        self._initialized = False
+        self._init_failed = False
 
-        if self.enabled:
-            try:
-                self.repo = Github(self.token).get_repo(self.repo_name)
-                logger.info(f"GitHub подключён: {self.repo_name}")
-            except Exception as e:
-                logger.error(f"Ошибка подключения к GitHub: {e}")
-                self.enabled = False
+    def _ensure_initialized(self):
+        """Ленивая инициализация — только при первом реальном использовании"""
+        if self._initialized or self._init_failed:
+            return
+
+        if not self.enabled:
+            self._initialized = True
+            return
+
+        try:
+            self.repo = Github(self.token).get_repo(self.repo_name)
+            logger.info(f"GitHub подключён: {self.repo_name}")
+            self._initialized = True
+        except Exception as e:
+            logger.warning(f"GitHub: отложенное подключение (ошибка: {e})")
+            self._init_failed = True
+            self.enabled = False
 
     def upload_file(self, path: str, content: str, message: str = "Автобэкап") -> bool:
         """Загрузить файл в GitHub"""
+        self._ensure_initialized()
         if not self.enabled:
             logger.debug("GitHub отключён, пропуск бэкапа")
             return False
