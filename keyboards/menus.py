@@ -1,203 +1,165 @@
 """
-Модуль с клавиатурами для бота
+Клавиатуры бота — ЕДИНЫЙ источник
 """
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
+# Все кнопки меню — для фильтрации от FSM
+ALL_MENU_BUTTONS = [
+    "➕ Добавить тело", "🗑️ Удалить тело",
+    "🕯️ Ритуальный заказ", "📋 Мои заказы",
+    "🚕 Водителю", "🔒 Закрыть смена",
+    "📈 Статистика", "📊 Отчёт за период",
+    "👥 Пользователи",
+    "🧪 Тест роли"
+]
 
-def kb_main_menu(role: str) -> ReplyKeyboardMarkup:
-    """Главное меню в зависимости от роли"""
-    builder = ReplyKeyboardBuilder()
-    
-    # Общие кнопки
-    builder.row(KeyboardButton(text="➕ Добавить тело"))
-    
+def kb_main_menu(role: str = None):
+    """Меню по ролям — сетка 2 столбца"""
+    b = ReplyKeyboardBuilder()
+
+    b.row(
+        KeyboardButton(text="➕ Добавить тело"),
+        KeyboardButton(text="🗑️ Удалить тело")
+    )
+    b.row(
+        KeyboardButton(text="🕯️ Ритуальный заказ"),
+        KeyboardButton(text="📋 Мои заказы")
+    )
+
     if role in ["admin", "manager_morg1", "manager_morg2"]:
-        builder.row(KeyboardButton(text="🔒 Закрыть смену"))
-    
-    builder.row(KeyboardButton(text="🕯️ Ритуальный заказ"))
-    
-    if role in ["admin", "manager_morg1", "manager_morg2", "agent_morg1", "agent_morg2"]:
-        builder.row(KeyboardButton(text="📋 Мои заказы"))
-    
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        builder.row(KeyboardButton(text="📊 Отчёт за период"))
-    
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        builder.row(KeyboardButton(text="🚗 Кто вывез"))
-    
+        b.row(KeyboardButton(text="🔒 Закрыть смена"))
+
+    b.row(
+        KeyboardButton(text="📈 Статистика"),
+        KeyboardButton(text="📊 Отчёт за период")
+    )
+
     if role == "admin":
-        builder.row(KeyboardButton(text="📈 Статистика"))
-        builder.row(KeyboardButton(text="👥 Пользователи"))
-    
-    return builder.as_markup(resize_keyboard=True)
+        b.row(KeyboardButton(text="👥 Пользователи"))
 
+    # Тест роли — только для админа (Евсеев)
+    b.row(KeyboardButton(text="🧪 Тест роли"))
 
-def kb_select_morgue() -> InlineKeyboardMarkup:
-    """Выбор морга"""
+    return b.as_markup(resize_keyboard=True, input_field_placeholder="Выбери действие:")
+
+def kb_role_switcher():
+    """Inline-кнопки для смены роли (тест)"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="morgue1")],
-        [InlineKeyboardButton(text="🏥 Мира 11", callback_data="morgue2")]
+        [InlineKeyboardButton(text="Админ", callback_data="test_role_admin")],
+        [InlineKeyboardButton(text="Менеджер М13", callback_data="test_role_manager_morg1"),
+         InlineKeyboardButton(text="Менеджер М11", callback_data="test_role_manager_morg2")],
+        [InlineKeyboardButton(text="Агент М13", callback_data="test_role_agent_morg1"),
+         InlineKeyboardButton(text="Агент М11", callback_data="test_role_agent_morg2")]
     ])
 
-
-def kb_body_type() -> InlineKeyboardMarkup:
-    """Тип тела"""
+def kb_select_morgue_add():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Стандарт", callback_data="body_std")],
-        [InlineKeyboardButton(text="Не стандарт", callback_data="body_nstd")]
+        [InlineKeyboardButton(text="Первомайская 13", callback_data="add_m1")],
+        [InlineKeyboardButton(text="Мира 11", callback_data="add_m2")]
     ])
 
-
-def kb_body_source() -> InlineKeyboardMarkup:
-    """Источник поступления"""
+def kb_select_morgue_close():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Стационар", callback_data="source_stat")],
-        [InlineKeyboardButton(text="Амбулаторно", callback_data="source_amb")]
+        [InlineKeyboardButton(text="Первомайская 13", callback_data="close_m1")],
+        [InlineKeyboardButton(text="Мира 11", callback_data="close_m2")]
     ])
 
+def kb_select_morgue_remove():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Первомайская 13", callback_data="rm_m1")],
+        [InlineKeyboardButton(text="Мира 11", callback_data="rm_m2")]
+    ])
 
-def kb_bodies_list(bodies: list) -> InlineKeyboardMarkup:
-    """Список тел для удаления"""
-    builder = InlineKeyboardBuilder()
+def kb_body_type():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Стандарт", callback_data="btype_std")],
+        [InlineKeyboardButton(text="Не стандарт", callback_data="btype_nstd")]
+    ])
+
+def kb_body_source():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Стационар", callback_data="bsrc_stat")],
+        [InlineKeyboardButton(text="Амбулаторно", callback_data="bsrc_amb")]
+    ])
+
+def kb_payment_status(bodies: list):
+    b = InlineKeyboardBuilder()
     for i, body in enumerate(bodies):
         status = "✅" if body.get("paid") else "❌"
-        removed = "🗑️ " if body.get("removed") else ""
-        builder.row(InlineKeyboardButton(
-            text=f"{removed}{status} {body['surname']}",
-            callback_data=f"body_select_{i}"
-        ))
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
-    return builder.as_markup()
+        b.row(InlineKeyboardButton(text=f"{status} {body['surname']}", callback_data=f"pay_{i}"))
+    b.row(InlineKeyboardButton(text="РАССЧИТАТЬ", callback_data="calc_done"))
+    return b.as_markup()
 
-
-def kb_payment_status(bodies: list) -> InlineKeyboardMarkup:
-    """Клавиатура для отметки оплаты"""
-    builder = InlineKeyboardBuilder()
+def kb_bodies_for_removal(bodies: list):
+    b = InlineKeyboardBuilder()
     for i, body in enumerate(bodies):
-        if body.get("removed"):
-            continue
-        status = "✅" if body.get("paid") else "❌"
-        builder.row(InlineKeyboardButton(
-            text=f"{status} {body['surname']}",
-            callback_data=f"payment_{i}"
-        ))
-    builder.row(InlineKeyboardButton(text="💰 РАССЧИТАТЬ", callback_data="calc_shift"))
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
-    return builder.as_markup()
+        if body.get("removed"): continue
+        b.row(InlineKeyboardButton(text=f"{body['surname']}", callback_data=f"rm_body_{i}"))
+    return b.as_markup()
 
-
-def kb_ritual_type() -> InlineKeyboardMarkup:
-    """Тип ритуального заказа"""
+def kb_removal_reason():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚰️ Похороны", callback_data="ritual_funeral")],
-        [InlineKeyboardButton(text="🔥 Кремация", callback_data="ritual_cremation")]
+        [InlineKeyboardButton(text="БСМЭ", callback_data="rmreason_bsme")],
+        [InlineKeyboardButton(text="Другая причина", callback_data="rmreason_other")]
     ])
 
-
-def kb_urn_type() -> InlineKeyboardMarkup:
-    """Тип урны"""
+def kb_ritual_type():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📦 Картон", callback_data="urn_cardboard")],
-        [InlineKeyboardButton(text="🏺 Пластик", callback_data="urn_plastic")]
+        [InlineKeyboardButton(text="Похороны", callback_data="rtype_funeral")],
+        [InlineKeyboardButton(text="Кремация", callback_data="rtype_cremation")]
     ])
 
-
-def kb_urn_color() -> InlineKeyboardMarkup:
-    """Цвет урны"""
+def kb_morgue_location():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚪ Белая", callback_data="color_white")],
-        [InlineKeyboardButton(text="⚫ Чёрная", callback_data="color_black")],
-        [InlineKeyboardButton(text="🔵 Синяя", callback_data="color_blue")]
+        [InlineKeyboardButton(text="Первомайская 13", callback_data="rloc_m1")],
+        [InlineKeyboardButton(text="Мира 11", callback_data="rloc_m2")],
+        [InlineKeyboardButton(text="Другое место", callback_data="rloc_other")]
     ])
 
+def kb_urn_type():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Вечная память", callback_data="urn_cardboard")],
+        [InlineKeyboardButton(text="Пластик", callback_data="urn_plastic")]
+    ])
 
-def kb_extras(selected: list = None) -> InlineKeyboardMarkup:
-    """Дополнительные услуги для кремации"""
-    if selected is None:
-        selected = []
-    
+def kb_urn_color():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Белый", callback_data="ucol_white")],
+        [InlineKeyboardButton(text="Чёрный", callback_data="ucol_black")],
+        [InlineKeyboardButton(text="Синий", callback_data="ucol_blue")]
+    ])
+
+def kb_extras(selected: list = None):
+    if selected is None: selected = []
     extras = {
-        "large_body": "Крупное тело",
-        "polished_coffin": "Полированный гроб",
-        "short_farewell": "Короткое прощание",
-        "hall": "Зал",
-        "hall_blessing": "Зал + отпевание",
-        "urgent": "Срочная кремация"
+        "large_body": "Крупное тело", "short_farewell": "Короткое прощание",
+        "polished_coffin": "Полированный гроб", "hall": "Зал",
+        "hall_blessing": "Зал + отпевание", "urgent": "Срочная кремация"
     }
-    
-    builder = InlineKeyboardBuilder()
+    b = InlineKeyboardBuilder()
     for key, label in extras.items():
-        mark = "✅" if key in selected else "⬜"
-        builder.row(InlineKeyboardButton(
-            text=f"{mark} {label}",
-            callback_data=f"extra_{key}"
-        ))
-    builder.row(InlineKeyboardButton(text="ДАЛЕЕ ➡️", callback_data="extras_done"))
-    return builder.as_markup()
+        mark = "✅" if key in selected else ""
+        b.row(InlineKeyboardButton(text=f"{mark} {label}" if mark else label, callback_data=f"rextra_{key}"))
+    b.row(InlineKeyboardButton(text="ДАЛЕЕ", callback_data="rextra_done"))
+    return b.as_markup()
 
-
-def kb_order_select(orders: list) -> InlineKeyboardMarkup:
-    """Выбор заказа"""
-    builder = InlineKeyboardBuilder()
+def kb_order_select(orders: list):
+    b = InlineKeyboardBuilder()
     for i, order in enumerate(orders):
-        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-        builder.row(InlineKeyboardButton(
-            text=f"{icon} {order.get('deceased', 'Без имени')}",
-            callback_data=f"order_select_{i}"
-        ))
-    return builder.as_markup()
+        icon = "🔥" if order.get("type") == "cremation" else ""
+        b.row(InlineKeyboardButton(text=f"{icon} {order.get('deceased', '?')}", callback_data=f"rorder_{i}"))
+    return b.as_markup()
 
-
-def kb_order_actions() -> InlineKeyboardMarkup:
-    """Действия с заказом"""
+def kb_order_actions():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚕 Водителю", callback_data="send_driver")],
-        [InlineKeyboardButton(text="🔥 Крематорий", callback_data="send_crematorium")]
+        [InlineKeyboardButton(text="Водителю", callback_data="rsend_driver")],
+        [InlineKeyboardButton(text="Крематорий", callback_data="rsend_crem")]
     ])
 
-
-def kb_removal_reason() -> InlineKeyboardMarkup:
-    """Причина удаления тела"""
+def kb_report_period():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="БСМЭ", callback_data="remove_bsme")],
-        [InlineKeyboardButton(text="Другая причина", callback_data="remove_other")]
-    ])
-
-
-def kb_report_period() -> InlineKeyboardMarkup:
-    """Выбор периода отчёта"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Неделя", callback_data="period_week")],
-        [InlineKeyboardButton(text="Месяц", callback_data="period_month")],
-        [InlineKeyboardButton(text="Квартал", callback_data="period_quarter")]
-    ])
-
-
-def kb_admin_stats() -> InlineKeyboardMarkup:
-    """Статистика для админа"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Первомайская 13", callback_data="stats_morgue1")],
-        [InlineKeyboardButton(text="Мира 11", callback_data="stats_morgue2")],
-        [InlineKeyboardButton(text="Оба морга", callback_data="stats_both")]
-    ])
-
-
-def kb_user_management() -> InlineKeyboardMarkup:
-    """Управление пользователями"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ Добавить пользователя", callback_data="user_add")],
-        [InlineKeyboardButton(text="🗑️ Удалить пользователя", callback_data="user_remove")],
-        [InlineKeyboardButton(text="📋 Список пользователей", callback_data="user_list")]
-    ])
-
-
-def kb_role_select() -> InlineKeyboardMarkup:
-    """Выбор роли"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Админ", callback_data="role_admin")],
-        [InlineKeyboardButton(text="Менеджер М13", callback_data="role_manager_morg1")],
-        [InlineKeyboardButton(text="Менеджер М11", callback_data="role_manager_morg2")],
-        [InlineKeyboardButton(text="Агент М13", callback_data="role_agent_morg1")],
-        [InlineKeyboardButton(text="Агент М11", callback_data="role_agent_morg2")]
+        [InlineKeyboardButton(text="Неделя", callback_data="speriod_week")],
+        [InlineKeyboardButton(text="Месяц", callback_data="speriod_month")],
+        [InlineKeyboardButton(text="Квартал", callback_data="speriod_quarter")]
     ])

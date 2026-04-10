@@ -14,7 +14,12 @@
       "Bash(git stash *)",
       "Bash(mkdir *)",
       "Bash(copy *)",
-      "Bash(findstr *)"
+      "Bash(findstr *)",
+      "Bash(taskkill *)",
+      "Bash(tasklist)",
+      "Bash(timeout *)",
+      "Bash(d *)",
+      "Bash(@if *)"
     ]
   },
   "$version": 3

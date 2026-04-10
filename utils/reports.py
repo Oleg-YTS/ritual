@@ -15,34 +15,40 @@ MORGUE_CONFIG = {
     },
     "morgue2": {
         "name": "Мира 11",
-        "income": {"std": 0, "nstd": 0},
+        "income": {"std": 8000, "nstd": 10000},
         "sanitary": {"std": 6500, "nstd": 8000},
-        "transport": {"std": 1500, "nstd": 2000}
+        "transport_stat": {"std": 1500, "nstd": 2000},  # только стационар
+        "transport_amb": {"std": 0, "nstd": 0}          # амбулаторно = 0
     }
 }
 
 
-def calculate_shift_finances(shift: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_shift_finances(shift: Dict[str, Any], morgue_id: str) -> Dict[str, Any]:
     """Расчёт финансов смены"""
     bodies = shift.get("bodies", [])
-    
+
     total_bodies = len([b for b in bodies if not b.get("removed")])
     total_paid = len([b for b in bodies if b.get("paid") and not b.get("removed")])
     total_unpaid = len([b for b in bodies if not b.get("paid") and not b.get("removed")])
-    
+
     income = 0
     sanitary_expense = 0
     transport_expense = 0
-    
+
     paid_bodies = [b for b in bodies if b.get("paid") and not b.get("removed")]
-    
+    all_active = [b for b in bodies if not b.get("removed")]
+
     for body in paid_bodies:
         body_type = "std" if body.get("type") == "std" else "nstd"
-        morgue = shift.get("morgue_id", "morgue1")
-        
-        income += MORGUE_CONFIG[morgue]["income"][body_type]
-        sanitary_expense += MORGUE_CONFIG[morgue]["sanitary"][body_type]
-        transport_expense += MORGUE_CONFIG[morgue]["transport"][body_type]
+        income += MORGUE_CONFIG[morgue_id]["income"][body_type]
+        sanitary_expense += MORGUE_CONFIG[morgue_id]["sanitary"][body_type]
+
+    # Перевозка — за ВСЕ стационарные тела (оплачены или нет)
+    for body in all_active:
+        if body.get("source") == "stat" and not body.get("removed"):
+            body_type = "std" if body.get("type") == "std" else "nstd"
+            if morgue_id == "morgue2":
+                transport_expense += MORGUE_CONFIG[morgue_id]["transport_stat"][body_type]
     
     agent_salary = shift.get("agent_salary", 0)
     total_expense = sanitary_expense + transport_expense + agent_salary
@@ -66,10 +72,10 @@ def calculate_shift_finances(shift: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def format_shift_report(shift: Dict[str, Any]) -> str:
+def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
     """Форматирование отчёта по смене"""
-    finances = calculate_shift_finances(shift)
-    morgue_name = MORGUE_CONFIG.get(shift.get("morgue_id", "morgue1"), {}).get("name", "Морг")
+    finances = calculate_shift_finances(shift, morgue_id)
+    morgue_name = MORGUE_CONFIG.get(morgue_id, {}).get("name", "Морг")
     
     start_time = datetime.fromisoformat(shift["start_time"]) if shift.get("start_time") else datetime.now()
     date_str = start_time.strftime("%d.%m.%Y")
@@ -83,40 +89,41 @@ def format_shift_report(shift: Dict[str, Any]) -> str:
     # Группировка по типу поступления
     stationary = [b for b in shift.get("bodies", []) if b.get("source") == "stat" and not b.get("removed")]
     ambulatory = [b for b in shift.get("bodies", []) if b.get("source") == "amb" and not b.get("removed")]
-    
+
     if stationary:
         report += "🏥 СТАЦИОНАР:\n"
         for i, body in enumerate(stationary, 1):
-            status = "✅" if body.get("paid") else "❌"
-            report += f"{i}. {status} {body['surname']}\n"
+            if body.get("paid"):
+                san = MORGUE_CONFIG[morgue_id]["sanitary"][body.get("type", "std")]
+                report += f"{i}. ✅ {body['surname']} — {san}₽\n"
+            else:
+                org = body.get("organization", "Не указано")
+                report += f"{i}. ❌ {body['surname']} → {org}\n"
         report += "\n"
-    
+
     if ambulatory:
         report += "🚗 АМБУЛАТОРНО:\n"
         for i, body in enumerate(ambulatory, 1):
-            status = "✅" if body.get("paid") else "❌"
-            report += f"{i}. {status} {body['surname']}\n"
+            if body.get("paid"):
+                san = MORGUE_CONFIG[morgue_id]["sanitary"][body.get("type", "std")]
+                report += f"{i}. ✅ {body['surname']} — {san}₽\n"
+            else:
+                org = body.get("organization", "Не указано")
+                report += f"{i}. ❌ {body['surname']} → {org}\n"
         report += "\n"
-    
+
     report += f"{'━' * 30}\n"
     report += f"💰 Доход: {finances['income']}₽\n"
     report += f"🧑‍⚕️ Санитары: {finances['sanitary_expense']}₽\n"
-    
+
     if finances['transport_expense'] > 0:
         report += f"🚚 Перевозка: {finances['transport_expense']}₽\n"
-    
+
     if finances['agent_salary'] > 0:
         report += f"👤 Зарплата агента: {finances['agent_salary']}₽\n"
-    
+
     report += f"📉 Общий расход: {finances['total_expense']}₽\n"
     report += f"✅ Чистая прибыль: {finances['profit']}₽\n"
-    
-    if finances['unpaid_list']:
-        report += f"\n{'━' * 30}\n"
-        report += "❌ НЕОПЛАЧЕННЫЕ:\n"
-        for body in finances['unpaid_list']:
-            org = body.get("organization", "Не указано")
-            report += f"• {body['surname']} → {org}\n"
     
     if finances['removed_list']:
         report += f"\n{'━' * 30}\n"
@@ -131,56 +138,58 @@ def format_shift_report(shift: Dict[str, Any]) -> str:
 def build_driver_card(order: Dict[str, Any]) -> str:
     """Создание карточки для водителя"""
     order_type = order.get("type", "funeral")
-    
+
     if order_type == "funeral":
-        card = "🚕 ЗАКАЗ ВОДИТЕЛЮ (Похороны)\n"
+        card = "ЗАКАЗ ВОДИТЕЛЮ\n"
         card += f"{'━' * 30}\n"
-        card += f"👤 Усопший: {order.get('deceased', 'Не указано')}\n"
-        card += f"📍 Морг: {order.get('morgue_location', 'Не указано')}\n"
-        
+        card += f"Дата: {order.get('event_date', 'Не указано')}\n"
+        card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
+        card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
+
         if order.get("temple"):
-            card += f"⛪ Отпевание: {order['temple']}\n"
-        
+            card += f"Отпевание: {order['temple']}\n"
+
         if order.get("cemetery"):
-            card += f"🪦 Кладбище: {order['cemetery']}\n"
-        
-        card += f"☎️ Телефон: {order.get('phone', 'Не указано')}\n"
-    
+            card += f"Кладбище: {order['cemetery']}\n"
+
+        card += f"Телефон: {order.get('phone', 'Не указано')}\n"
+
     else:  # cremation
         extras = order.get("extras", [])
         has_hall = "hall" in extras or "hall_blessing" in extras
-        
-        card = "🚕 ЗАКАЗ ВОДИТЕЛЮ (Кремация)\n"
+
+        card = "ЗАКАЗ ВОДИТЕЛЮ (Кремация)\n"
         card += f"{'━' * 30}\n"
-        card += f"👤 Усопший: {order.get('deceased', 'Не указано')}\n"
-        card += f"📍 Морг: {order.get('morgue_location', 'Не указано')}\n"
-        
+        card += f"Дата: {order.get('event_date', 'Не указано')}\n"
+        card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
+        card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
+
         if has_hall:
-            card += f"🏛️ Зал отпевания\n"
-            card += f"📍 Конечная точка: Крематорий\n"
+            card += f"Зал отпевания\n"
+            card += f"Конечная точка: Крематорий\n"
         else:
             if order.get("temple"):
-                card += f"⛪ Храм: {order['temple']}\n"
-            card += f"📍 Конечная точка: Крематорий\n"
-        
-        card += f"📅 Дата кремации: {order.get('cremation_date', 'Не указано')}\n"
-        card += f"☎️ Телефон: {order.get('phone', 'Не указано')}\n"
-    
+                card += f"Храм: {order['temple']}\n"
+            card += f"Конечная точка: Крематорий\n"
+
+        card += f"Телефон: {order.get('phone', 'Не указано')}\n"
+
     return card
 
 
 def build_crematorium_card(order: Dict[str, Any]) -> str:
     """Создание карточки для крематория"""
-    urn_type = order.get("urn_type", "")
-    urn_color = order.get("urn_color", "")
-    
-    if urn_type == "plastic" and urn_color:
-        urn_str = f"Пластик ({urn_color})"
-    elif urn_type == "cardboard":
-        urn_str = "Картон (вечная память)"
-    else:
-        urn_str = urn_type
-    
+    urn_str = order.get("urn", "")
+    if not urn_str:
+        urn_type = order.get("urn_type", "")
+        urn_color = order.get("urn_color", "")
+        if urn_type == "plastic" and urn_color:
+            urn_str = f"Пластик ({urn_color})"
+        elif urn_type == "cardboard":
+            urn_str = "Вечная память"
+        else:
+            urn_str = urn_type
+
     extras = order.get("extras", [])
     extras_map = {
         "large_body": "Крупное тело",
@@ -190,18 +199,21 @@ def build_crematorium_card(order: Dict[str, Any]) -> str:
         "hall_blessing": "Зал + отпевание",
         "urgent": "Срочная кремация"
     }
-    
+
     extras_list = [extras_map.get(e, e) for e in extras]
-    extras_str = "; ".join(extras_list) if extras_list else "Нет"
-    
-    card = "🔥 КРЕМАТОРИЙ\n"
+    if extras_list:
+        extras_str = "\n".join([f"• {e}" for e in extras_list])
+    else:
+        extras_str = "Нет"
+
+    card = "КРЕМАТОРИЙ\n"
     card += f"{'━' * 30}\n"
-    card += f"👤 ФИО: {order.get('deceased', 'Не указано')}\n"
-    card += f"📅 Дата кремации: {order.get('cremation_date', 'Не указано')}\n"
-    card += f"📦 Урна: {urn_str}\n"
-    card += f"➕ Допы: {extras_str}\n\n"
+    card += f"ФИО: {order.get('deceased', 'Не указано')}\n"
+    card += f"Дата кремации: {order.get('event_date', 'Не указано')}\n"
+    card += f"Урна: {urn_str}\n"
+    card += f"Допы:\n{extras_str}\n\n"
     card += "Все стандартно, оплата наличными, оформление в день кремации.\n"
-    
+
     return card
 
 

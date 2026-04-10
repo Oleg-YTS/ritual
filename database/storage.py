@@ -56,6 +56,15 @@ class JSONStorage:
             await f.write(json.dumps(data, ensure_ascii=False, indent=2))
 
 
+# Глобальный словарь для тестовых ролей
+_test_roles = {}
+
+def set_test_role(user_id: int, role: str):
+    _test_roles[user_id] = role
+
+def clear_test_role(user_id: int):
+    _test_roles.pop(user_id, None)
+
 class UsersStorage(JSONStorage):
     """Хранилище пользователей"""
     
@@ -74,6 +83,9 @@ class UsersStorage(JSONStorage):
                 json.dump(default_users, f, ensure_ascii=False, indent=2)
     
     def get_user(self, telegram_id: int) -> Optional[Dict[str, str]]:
+        # Проверка тестовой роли
+        if telegram_id in _test_roles:
+            return {"role": _test_roles[telegram_id], "name": f"ТЕСТ({_test_roles[telegram_id]})"}
         users = self.read()
         return users.get(str(telegram_id))
     
@@ -114,7 +126,7 @@ class MorgueStorage(JSONStorage):
         data = self.read()
         if "shifts" not in data:
             data["shifts"] = []
-        
+
         shift_id = f"shift_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         shift = {
             "shift_id": shift_id,
@@ -128,7 +140,7 @@ class MorgueStorage(JSONStorage):
         data["shifts"].append(shift)
         self.write(data)
         return shift
-    
+
     def add_body(self, shift_id: str, body_data: Dict[str, Any]):
         data = self.read()
         for shift in data.get("shifts", []):

@@ -1,0 +1,441 @@
+{
+  "shifts": [
+    {
+      "shift_id": "shift_20260409_190908",
+      "start_time": "2026-04-09T19:09:08.465284",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "ПИСКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "СИСЬКИН",
+          "type": "nstd",
+          "source": "amb",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ХУИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "ВАФЛИ"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-09T19:09:48.427858",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260409_191422",
+      "start_time": "2026-04-09T19:14:22.929637",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "ВАФЛИ"
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "nstd",
+          "source": "amb",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-09T19:15:06.280361",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260409_194823",
+      "start_time": "2026-04-09T19:48:23.207962",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "nstd",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ЖОПКИН",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": "ГРС"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-09T19:49:02.301183",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260409_195212",
+      "start_time": "2026-04-09T19:52:12.816501",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "amb",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ЖОПКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "ГРС"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-09T19:52:49.903850",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260409_195623",
+      "start_time": "2026-04-09T19:56:23.871627",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "БИТЫЙ",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": true,
+          "organization": "",
+          "removed_reason": "БСМЭ"
+        },
+        {
+          "surname": "СИЗЫЙ",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": true,
+          "organization": "",
+          "removed_reason": "БСМЭ"
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "БИТЫЙ",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": true,
+          "organization": "",
+          "removed_reason": "БСМЭ"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-09T19:57:37.462606",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
+    },
+    {
+      "shift_id": "shift_20260409_215623",
+      "start_time": "2026-04-09T21:56:23.931224",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "ПИСИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        }
+      ],
+      "orders": [
+        {
+          "order_date": "2026-04-09 21:57",
+          "event_date": "12.04.2026",
+          "type": "funeral",
+          "customer_name": "СИСИН",
+          "customer_phone": "89112324433",
+          "deceased": "ПИСИН",
+          "morgue_location": "Первомайская 13",
+          "phone": "89112324433",
+          "temple": "СЕМАШКО",
+          "cemetery": "1-Е"
+        }
+      ],
+      "closed": true,
+      "end_time": "2026-04-09T21:57:21.757988",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
+    },
+    {
+      "shift_id": "shift_20260409_234900",
+      "start_time": "2026-04-09T23:49:00.007558",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "АДС"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-10T00:10:22.679115",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260410_002155",
+      "start_time": "2026-04-10T00:21:55.119932",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "БИТЫЙ",
+          "type": "nstd",
+          "source": "stat",
+          "paid": false,
+          "removed": true,
+          "organization": "",
+          "removed_reason": "БСМЭ"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-10T00:27:02.199395",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
+    },
+    {
+      "shift_id": "shift_20260410_004306",
+      "start_time": "2026-04-10T00:43:06.046903",
+      "opened_by": 747600306,
+      "opened_by_name": "ТЕСТ(admin)",
+      "bodies": [
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "СИСКИН",
+          "type": "std",
+          "source": "amb",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "АДС"
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-10T23:54:57.642205",
+      "closed_by": 747600306,
+      "closed_by_name": "ТЕСТ(admin)"
+    },
+    {
+      "shift_id": "shift_20260411_000512",
+      "start_time": "2026-04-11T00:05:12.501985",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "СИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        },
+        {
+          "surname": "ПИСЬКИН",
+          "type": "nstd",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": "ГРС"
+        }
+      ],
+      "orders": [
+        {
+          "order_date": "2026-04-11 00:11",
+          "event_date": "12.04.2026",
+          "type": "cremation",
+          "customer_name": "ОГОНЬ",
+          "customer_phone": "891123423423",
+          "deceased": "ВОДА",
+          "morgue_location": "Первомайская 13",
+          "phone": "891123423423",
+          "temple": "СЕМАХА",
+          "cemetery": "",
+          "urn": "Вечная память",
+          "extras": [
+            "large_body",
+            "short_farewell",
+            "polished_coffin"
+          ],
+          "coffin": ""
+        },
+        {
+          "order_date": "2026-04-11 00:18",
+          "event_date": "12.04.2026",
+          "type": "cremation",
+          "customer_name": "ПИСЬКИН",
+          "customer_phone": "89112033232",
+          "deceased": "СИСЬКИН",
+          "morgue_location": "Первомайская 13",
+          "phone": "89112033232",
+          "temple": "Зал отпевания",
+          "cemetery": "",
+          "urn": "Пластик (Чёрный)",
+          "extras": [
+            "hall_blessing"
+          ],
+          "coffin": ""
+        }
+      ],
+      "closed": true,
+      "end_time": "2026-04-11T01:04:08.623938",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260411_010530",
+      "start_time": "2026-04-11T01:05:30.641351",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [
+        {
+          "surname": "ХУИСЬКИН",
+          "type": "std",
+          "source": "stat",
+          "paid": true,
+          "removed": false,
+          "organization": ""
+        }
+      ],
+      "orders": [],
+      "closed": true,
+      "end_time": "2026-04-11T01:05:44.228678",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
+    }
+  ]
+}
