@@ -48,8 +48,9 @@ dp.include_router(ritual_router)
 from handlers.stats import router as stats_router
 dp.include_router(stats_router)
 
-from handlers.users import router as users_router
-dp.include_router(users_router)
+# БЛОК 4: ПОЛЬЗОВАТЕЛИ (отключено, правим users.json вручную)
+# from handlers.users import router as users_router
+# dp.include_router(users_router)
 
 # ============================================================
 # КОНСТАНТЫ
@@ -128,6 +129,30 @@ async def scheduler():
         except Exception as e:
             logger.error(f"Ошибка планировщика: {e}")
             await asyncio.sleep(60)
+
+# ============================================================
+# ТЕСТ РОЛЕЙ (ТОЛЬКО ДЛЯ АДМИНА)
+# ============================================================
+@dp.message(F.text.startswith("/role"))
+async def cmd_test_role(message: types.Message, state: FSMContext):
+    # Работает только для твоего ID
+    if message.from_user.id != 747600306:
+        return 
+
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("Использование: /role agent_morg1 (или admin, manager_morg1, manager_morg2, agent_morg2)")
+        return
+
+    new_role = parts[1]
+    valid_roles = ["admin", "manager_morg1", "manager_morg2", "agent_morg1", "agent_morg2"]
+    if new_role not in valid_roles:
+        await message.answer(f"Доступные роли: {', '.join(valid_roles)}")
+        return
+
+    from database.storage import set_test_role
+    set_test_role(message.from_user.id, new_role)
+    await message.answer(f"✅ Твоя тестовая роль теперь: {new_role}. Нажми /start, чтобы обновить меню.")
 
 # ============================================================
 # ЗАПУСК

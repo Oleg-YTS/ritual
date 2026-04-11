@@ -10,21 +10,26 @@ ALL_MENU_BUTTONS = [
     "⚰️ Похороны", "🔥 Кремация", "📋 Мои заказы",
     "🚕 Водителю", "🔒 Закрыть смена",
     "📈 Статистика", "📊 Отчёт за период",
-    "👥 Пользователи", "🧪 Тест роли"
+    "🧪 Тест роли"
 ]
 
 def kb_main_menu(role: str = None):
-    """Меню по ролям — сетка 2 столбца"""
+    """Меню с разделением по ролям"""
     b = ReplyKeyboardBuilder()
+    
+    # === ОБЩИЙ БЛОК (Для всех: Агент, Менеджер, Админ) ===
     b.row(KeyboardButton(text="➕ Добавить тело"), KeyboardButton(text="🗑️ Удалить тело"))
     b.row(KeyboardButton(text="⚰️ Похороны"), KeyboardButton(text="🔥 Кремация"))
     b.row(KeyboardButton(text="📋 Мои заказы"))
+    
+    # === БЛОК МЕНЕДЖЕРА (Менеджер + Админ) ===
     if role in ["admin", "manager_morg1", "manager_morg2"]:
-        b.row(KeyboardButton(text="🔒 Закрыть смена"))
-    b.row(KeyboardButton(text="📈 Статистика"), KeyboardButton(text="📊 Отчёт за период"))
+        b.row(KeyboardButton(text="🔒 Закрыть смена"), KeyboardButton(text="📈 Статистика"))
+
+    # === БЛОК АДМИНА (Только Админ) ===
     if role == "admin":
-        b.row(KeyboardButton(text="👥 Пользователи"))
-    b.row(KeyboardButton(text="🧪 Тест роли"))
+        b.row(KeyboardButton(text="📊 Отчёт за период"))
+
     return b.as_markup(resize_keyboard=True, input_field_placeholder="Выбери действие:")
 
 def kb_select_morgue_add():

@@ -19,7 +19,8 @@
       "Bash(tasklist)",
       "Bash(timeout *)",
       "Bash(d *)",
-      "Bash(@if *)"
+      "Bash(@if *)",
+      "Bash(dir *)"
     ]
   },
   "$version": 3
