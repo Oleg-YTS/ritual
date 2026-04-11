@@ -8,6 +8,7 @@ import sys
 import logging
 import asyncio
 import argparse
+from datetime import datetime
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -51,6 +52,84 @@ from handlers.users import router as users_router
 dp.include_router(users_router)
 
 # ============================================================
+# КОНСТАНТЫ
+# ============================================================
+MORGUE_NAMES = {"morgue1": "Первомайская 13", "morgue2": "Мира 11"}
+
+# ============================================================
+# ПЛАНИРОВЩИК (ФОНОВЫЕ ЗАДАЧИ)
+# ============================================================
+from database.storage import UsersStorage, MorgueStorage
+
+async def scheduler():
+    """Фоновая задача: напоминания и авто-закрытие"""
+    logger.info("🕒 Планировщик запущен")
+    
+    users_db = UsersStorage()
+    morgue1_db = MorgueStorage("morgue1")
+    morgue2_db = MorgueStorage("morgue2")
+    DBS = {"morgue1": morgue1_db, "morgue2": morgue2_db}
+    
+    sent_reminders = {} # Чтобы не спамить
+
+    while True:
+        try:
+            now = datetime.now()
+            current_time = now.strftime("%H:%M")
+            date_key = now.strftime("%Y-%m-%d")
+
+            # --- 1. НАПОМИНАНИЯ (14:30, 15:00, 15:20) ---
+            if current_time in ["14:30", "15:00", "15:20"]:
+                reminder_key = f"rem_{current_time}"
+                if reminder_key not in sent_reminders:
+                    sent_reminders[reminder_key] = True
+                    
+                    # Находим всех менеджеров
+                    all_users = users_db.get_all_users()
+                    for uid_str, udata in all_users.items():
+                        role = udata.get("role", "")
+                        if role.startswith("manager_morg"):
+                            mid = "morgue1" if "morg1" in role else "morgue2"
+                            # Проверяем открытую смену
+                            db = DBS[mid]
+                            shift = db.get_active_shift()
+                            
+                            if shift and not shift.get("closed"):
+                                await bot.send_message(
+                                    int(uid_str), 
+                                    f"⚠️ <b>Напоминание!</b>\nДо закрытия смены осталось немного.\nПроверь оплаты по телам!"
+                                )
+
+            # --- 2. АВТО-ЗАКРЫТИЕ (15:30) ---
+            if now.hour == 15 and now.minute == 30:
+                close_key = f"close_{date_key}"
+                if close_key not in sent_reminders:
+                    sent_reminders[close_key] = True
+                    
+                    for mid in ["morgue1", "morgue2"]:
+                        db = DBS[mid]
+                        shift = db.get_active_shift()
+                        if shift:
+                            db.close_shift(shift["shift_id"], 0, "Автозакрытие (15:30)")
+                            logger.info(f"🔒 Смена {mid} закрыта автоматически.")
+                            
+                            # Уведомляем менеджера
+                            all_users = users_db.get_all_users()
+                            for uid_str, udata in all_users.items():
+                                role = udata.get("role", "")
+                                if ("morg1" in role and mid == "morgue1") or ("morg2" in role and mid == "morgue2"):
+                                    await bot.send_message(int(uid_str), f"🔒 Смена в {MORGUE_NAMES[mid]} закрыта автоматически (15:30).")
+
+            # Сброс старых ключей (раз в сутки)
+            if now.hour == 0 and now.minute == 1:
+                sent_reminders.clear()
+
+            await asyncio.sleep(45) # Проверка каждые 45 секунд
+        except Exception as e:
+            logger.error(f"Ошибка планировщика: {e}")
+            await asyncio.sleep(60)
+
+# ============================================================
 # ЗАПУСК
 # ============================================================
 
@@ -92,6 +171,10 @@ async def polling_main():
         await bot.delete_webhook()
         logger.info("Webhook удалён")
     except Exception as e: logger.warning(f"Ошибка удаления webhook: {e}")
+    
+    # Запускаем планировщик в фоне
+    asyncio.create_task(scheduler())
+    
     await dp.start_polling(bot, skip_updates=True)
 
 

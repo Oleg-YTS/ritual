@@ -1,6 +1,5 @@
 """
 БЛОК 2: РИТУАЛКА — похороны и кремация
-Версия: Рабочая (до рефакторинга меню)
 """
 
 import os
@@ -18,6 +17,11 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
 from utils.reports import build_driver_card, build_crematorium_card
+from keyboards.menus import (
+    kb_main_menu, kb_morgue_location,
+    kb_urn_type, kb_urn_color, kb_extras, kb_order_select, kb_order_actions,
+    ALL_MENU_BUTTONS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,103 +36,19 @@ morgue2_db = MorgueStorage("morgue2")
 MORGUE_DBS = {"morgue1": morgue1_db, "morgue2": morgue2_db}
 MORGUE_NAMES = {"morgue1": "Первомайская 13", "morgue2": "Мира 11"}
 
-# Временное хранение заказов
-active_orders: List[Dict[str, Any]] = []
-
-# ============================================================
-# КЛАВИАТУРЫ
-# ============================================================
-
-def kb_main_menu(role: str):
-    b = ReplyKeyboardBuilder()
-    b.row(KeyboardButton(text="➕ Добавить тело"))
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        b.row(KeyboardButton(text="🔒 Закрыть смена"))
-        b.row(KeyboardButton(text="🗑️ Удалить тело"))
-    b.row(KeyboardButton(text="🕯️ Ритуальный заказ"))
-    b.row(KeyboardButton(text="📋 Мои заказы"))
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        b.row(KeyboardButton(text="📊 Отчёт за период"))
-    if role == "admin":
-        b.row(KeyboardButton(text="📈 Статистика"))
-        b.row(KeyboardButton(text="👥 Пользователи"))
-    return b.as_markup(resize_keyboard=True)
-
-def kb_ritual_type():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚰️ Похороны", callback_data="rtype_funeral")],
-        [InlineKeyboardButton(text="🔥 Кремация", callback_data="rtype_cremation")]
-    ])
-
-def kb_morgue_location():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Первомайская 13", callback_data="rloc_m1")],
-        [InlineKeyboardButton(text="Мира 11", callback_data="rloc_m2")],
-        [InlineKeyboardButton(text="Другое место", callback_data="rloc_other")]
-    ])
-
-def kb_urn_type():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Вечная память", callback_data="urn_cardboard")],
-        [InlineKeyboardButton(text="Пластик", callback_data="urn_plastic")]
-    ])
-
-def kb_urn_color():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Белый", callback_data="ucol_white")],
-        [InlineKeyboardButton(text="Чёрный", callback_data="ucol_black")],
-        [InlineKeyboardButton(text="Синий", callback_data="ucol_blue")]
-    ])
-
-def kb_extras(selected: list = None):
-    if selected is None: selected = []
-    extras = {
-        "large_body": "Крупное тело",
-        "short_farewell": "Короткое прощание",
-        "polished_coffin": "Полированный гроб",
-        "hall": "Зал",
-        "hall_blessing": "Зал + отпевание",
-        "urgent": "Срочная кремация"
-    }
-    b = InlineKeyboardBuilder()
-    for key, label in extras.items():
-        mark = "✅" if key in selected else ""
-        b.row(InlineKeyboardButton(text=f"{mark} {label}" if mark else label, callback_data=f"rextra_{key}"))
-    b.row(InlineKeyboardButton(text="ДАЛЕЕ", callback_data="rextra_done"))
-    return b.as_markup()
-
-def kb_order_select(orders: list):
-    b = InlineKeyboardBuilder()
-    for i, order in enumerate(orders):
-        icon = "🔥" if order.get("type") == "cremation" else ""
-        b.row(InlineKeyboardButton(text=f"{icon} {order.get('deceased', '?')}", callback_data=f"rorder_{i}"))
-    return b.as_markup()
-
-def kb_order_actions():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Водителю", callback_data="rsend_driver")],
-        [InlineKeyboardButton(text="Крематорий", callback_data="rsend_crem")]
-    ])
-
-def kb_report_period():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Неделя", callback_data="speriod_week")],
-        [InlineKeyboardButton(text="Месяц", callback_data="speriod_month")],
-        [InlineKeyboardButton(text="Квартал", callback_data="speriod_quarter")]
-    ])
+# Удалено: active_orders = [] (теперь читаем из БД)
 
 # ============================================================
 # FSM
 # ============================================================
 
 class RitualFSM(StatesGroup):
-    order_type = State()
+    select_morgue = State()
+    other_location = State()
     event_date = State()
     customer_name = State()
     customer_phone = State()
     deceased_name = State()
-    location_type = State()
-    other_location = State()
     temple = State()
     cemetery = State()
     urn_type = State()
@@ -166,34 +86,68 @@ def check_perm(tid, action):
     return action in perms.get(role, [])
 
 def save_order_to_shift(order: dict, morgue_id: str) -> bool:
+    """Теперь сохраняет заказ в общий пул морга, а не в смену"""
     db = MORGUE_DBS.get(morgue_id)
     if not db: return False
-    shift = db.get_active_shift()
-    if shift: return db.add_order(shift["shift_id"], order)
-    return False
+    return db.add_global_order(order)
 
 # ============================================================
-# НАЧАЛО ЗАКАЗА
+# ХЕНДЛЕРЫ (Прямой запуск кнопок)
 # ============================================================
 
-@router.message(F.text == "🕯️ Ритуальный заказ")
-async def start_ritual_order(message: types.Message, state: FSMContext):
-    logger.info(f"Нажата 🕯️ Ритуальный заказ от {message.from_user.id}")
+@router.message(F.text == "⚰️ Похороны")
+async def start_funeral(message: types.Message, state: FSMContext):
+    await state.clear()
+    await _start_ritual_flow(message, state, "funeral")
+
+@router.message(F.text == "🔥 Кремация")
+async def start_cremation(message: types.Message, state: FSMContext):
+    await state.clear()
+    await _start_ritual_flow(message, state, "cremation")
+
+async def _start_ritual_flow(message, state, otype: str):
     if not check_perm(message.from_user.id, "order"):
         await message.answer("⚠️ Нет прав."); return
-    await state.clear()
-    await message.answer("Тип заказа:", reply_markup=kb_ritual_type())
-    await state.set_state(RitualFSM.order_type)
 
-@router.callback_query(F.data.in_(["rtype_funeral", "rtype_cremation"]), RitualFSM.order_type)
-async def select_order_type(cb: types.CallbackQuery, state: FSMContext):
-    otype = "funeral" if cb.data == "rtype_funeral" else "cremation"
+    user_morgue = get_user_morgue(message.from_user.id)
     await state.update_data(type=otype)
-    await cb.message.edit_text("📅 Дата мероприятия (ДД.ММ.ГГГГ):")
-    await cb.answer()
+
+    if user_morgue:
+        # Сотрудник — сразу дата
+        await state.update_data(morgue_id=user_morgue)
+        await message.answer("📅 Дата мероприятия (ДД.ММ.ГГГГ):")
+        await state.set_state(RitualFSM.event_date)
+    else:
+        # Админ — выбор морга
+        await message.answer("Где находится тело?", reply_markup=kb_morgue_location())
+        await state.set_state(RitualFSM.select_morgue)
+
+@router.callback_query(F.data.in_(["rloc_m1", "rloc_m2", "rloc_other"]), RitualFSM.select_morgue)
+async def select_location(cb: types.CallbackQuery, state: FSMContext):
+    loc_map = {"rloc_m1": "morgue1", "rloc_m2": "morgue2", "rloc_other": "other"}
+    loc = loc_map[cb.data]
+    await state.update_data(location=loc, morgue_id=loc if loc != "other" else None)
+    
+    if loc == "other":
+        await cb.message.edit_text("📍 Введи адрес:")
+        await cb.answer()
+        await state.set_state(RitualFSM.other_location)
+    else:
+        data = await state.get_data()
+        otype_name = "Похороны" if data.get("type") == "funeral" else "Кремация"
+        await cb.message.edit_text(f"🏥 {MORGUE_NAMES.get(loc, loc)} — {otype_name}\n\n📅 Дата мероприятия (ДД.ММ.ГГГГ):")
+        await cb.answer()
+        await state.set_state(RitualFSM.event_date)
+
+@router.message(RitualFSM.other_location)
+async def input_other_location(message: types.Message, state: FSMContext):
+    loc = message.text.strip().upper()
+    if not loc: await message.answer("⚠️ Введи адрес:"); return
+    await state.update_data(location=loc)
+    await message.answer("📅 Дата мероприятия (ДД.ММ.ГГГГ):")
     await state.set_state(RitualFSM.event_date)
 
-@router.message(RitualFSM.event_date)
+@router.message(RitualFSM.event_date, ~F.text.in_(ALL_MENU_BUTTONS))
 async def input_event_date(message: types.Message, state: FSMContext):
     date_str = message.text.strip()
     try:
@@ -204,7 +158,7 @@ async def input_event_date(message: types.Message, state: FSMContext):
     await message.answer("👤 ФИО заказчика:")
     await state.set_state(RitualFSM.customer_name)
 
-@router.message(RitualFSM.customer_name)
+@router.message(RitualFSM.customer_name, ~F.text.in_(ALL_MENU_BUTTONS))
 async def input_customer_name(message: types.Message, state: FSMContext):
     name = message.text.strip().upper()
     if not name: await message.answer("⚠️ Введи ФИО:"); return
@@ -212,7 +166,7 @@ async def input_customer_name(message: types.Message, state: FSMContext):
     await message.answer("☎️ Телефон:")
     await state.set_state(RitualFSM.customer_phone)
 
-@router.message(RitualFSM.customer_phone)
+@router.message(RitualFSM.customer_phone, ~F.text.in_(ALL_MENU_BUTTONS))
 async def input_customer_phone(message: types.Message, state: FSMContext):
     phone = message.text.strip()
     if not phone: await message.answer("⚠️ Введи телефон:"); return
@@ -220,38 +174,12 @@ async def input_customer_phone(message: types.Message, state: FSMContext):
     await message.answer("💀 ФИО усопшего:")
     await state.set_state(RitualFSM.deceased_name)
 
-@router.message(RitualFSM.deceased_name)
+@router.message(RitualFSM.deceased_name, ~F.text.in_(ALL_MENU_BUTTONS))
 async def input_deceased_name(message: types.Message, state: FSMContext):
     name = message.text.strip().upper()
     if not name: await message.answer("⚠️ Введи ФИО:"); return
     await state.update_data(deceased_name=name)
-    await message.answer("📍 Где тело?", reply_markup=kb_morgue_location())
-    await state.set_state(RitualFSM.location_type)
-
-@router.callback_query(F.data.in_(["rloc_m1", "rloc_m2", "rloc_other"]), RitualFSM.location_type)
-async def select_location(cb: types.CallbackQuery, state: FSMContext):
-    loc_map = {"rloc_m1": "morgue1", "rloc_m2": "morgue2", "rloc_other": "other"}
-    loc = loc_map[cb.data]
-    await state.update_data(location=loc)
-    if loc == "other":
-        await cb.message.edit_text("📍 Введи адрес:")
-        await cb.answer()
-        await state.set_state(RitualFSM.other_location)
-    else:
-        await cb.answer()
-        data = await state.get_data()
-        if data["type"] == "funeral":
-            await cb.message.answer("⛪ Где отпевают (храм):")
-            await state.set_state(RitualFSM.temple)
-        else:
-            await cb.message.answer("📦 Тип урны:", reply_markup=kb_urn_type())
-            await state.set_state(RitualFSM.urn_type)
-
-@router.message(RitualFSM.other_location)
-async def input_other_location(message: types.Message, state: FSMContext):
-    loc = message.text.strip().upper()
-    if not loc: await message.answer("⚠️ Введи адрес:"); return
-    await state.update_data(location=loc)
+    
     data = await state.get_data()
     if data["type"] == "funeral":
         await message.answer("⛪ Где отпевают (храм):")
@@ -343,9 +271,13 @@ async def _save_and_send(message, state: FSMContext):
     loc_map = {"morgue1": "Первомайская 13", "morgue2": "Мира 11"}
     morgue_name = loc_map.get(loc, loc)
     
+    now = datetime.now()
+    
     order = {
-        "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "event_date": data["event_date"], "type": otype,
+        "order_date": now.strftime("%Y-%m-%d %H:%M"), # Лог
+        "creation_date": now.strftime("%d.%m.%Y"),    # Для поиска "Мои заказы за сегодня"
+        "event_date": data["event_date"], 
+        "type": otype,
         "customer_name": data["customer_name"], "customer_phone": data["customer_phone"],
         "deceased": data["deceased_name"], "morgue_location": morgue_name,
         "phone": data["customer_phone"], "temple": data.get("temple", ""),
@@ -355,11 +287,24 @@ async def _save_and_send(message, state: FSMContext):
         urn = data.get("urn_type", "")
         order["urn"] = "Вечная память" if urn == "cardboard" else f"Пластик ({data.get('urn_color', '')})"
         order["extras"] = data.get("extras", [])
-
-    active_orders.append(order)
+    
     actual_morgue = loc if loc in ["morgue1", "morgue2"] else get_user_morgue(message.from_user.id)
-    if actual_morgue: save_order_to_shift(order, actual_morgue)
+    
+    try:
+        if actual_morgue:
+            save_order_to_shift(order, actual_morgue)
+        else:
+            # Если админ и выбрал "Другое место" (нет привязки к моргу)
+            # Сохраняем в ОБА файла, чтобы не потерять отчетность
+            save_order_to_shift(order, "morgue1")
+            save_order_to_shift(order, "morgue2")
+            logger.info(f"Заказ сохранен в оба морга (Admin/Other location)")
+    except Exception as e:
+        logger.error(f"ОШИБКА СОХРАНЕНИЯ ЗАКАЗА: {e}")
+        await message.answer(f"⚠️ Ошибка сохранения заказа: {e}")
+        return
 
+    # Читаем актуальные карточки из сохраненного order
     driver_card = build_driver_card(order)
     crem_card = build_crematorium_card(order) if otype == "cremation" else None
     response = "✅ Заказ сохранён\n\n"
@@ -373,46 +318,90 @@ async def _save_and_send(message, state: FSMContext):
     role = user["role"] if user else "admin"
     await message.answer("Далее:", reply_markup=kb_main_menu(role))
 
-# Мои заказы
+# Мои заказы (Чтение из БД за сегодня)
 @router.message(F.text == "📋 Мои заказы")
 async def show_my_orders(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "cards"):
         await message.answer("⚠️ Нет прав."); return
-    if not active_orders:
-        await message.answer("⚠️ Нет заказов."); return
-    if len(active_orders) == 1:
-        order = active_orders[0]
-        icon = "🔥" if order.get("type") == "cremation" else ""
-        await message.answer(f"{icon} {order.get('deceased', 'Без имени')}", reply_markup=kb_order_actions())
-    else:
-        await message.answer("Выбери заказ:", reply_markup=kb_order_select(active_orders))
+    
+    user_morgue = get_user_morgue(message.from_user.id)
+    
+    # Собираем заказы
+    orders_to_show = []
+    today_str = datetime.now().strftime("%d.%m.%Y") # Формат 11.04.2026
 
+    # Если админ - смотрим оба морга, иначе только свой
+    mids = ["morgue1", "morgue2"] if not user_morgue else [user_morgue]
+    
+    for mid in mids:
+        db = MORGUE_DBS[mid]
+        all_orders = db.get_all_orders()
+        # Фильтр заказов: ищем заказы, СОЗДАННЫЕ сегодня
+        for order in all_orders:
+            if order.get("creation_date") == today_str:
+                # Добавляем имя морга для наглядности
+                order["_morgue_name"] = MORGUE_NAMES[mid]
+                orders_to_show.append(order)
+
+    if not orders_to_show:
+        await message.answer(f"📅 Заказов за сегодня ({today_str}) не найдено.")
+        return
+
+    if len(orders_to_show) == 1:
+        order = orders_to_show[0]
+        await state.update_data(orders_list=orders_to_show, current_order=order) # Сохраняем в стейт
+        morgue_label = f" ({order.get('_morgue_name')})" if len(mids) > 1 else ""
+        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
+        await message.answer(f"{icon} {order.get('deceased', 'Без имени')}{morgue_label}", reply_markup=kb_order_actions())
+    else:
+        # Если заказов много, формируем список и отправляем ОДНИМ сообщением
+        await state.update_data(orders_list=orders_to_show) # Сохраняем список в стейт для callbacks
+        b = InlineKeyboardBuilder()
+        for i, order in enumerate(orders_to_show):
+            icon = "🔥" if order.get("type") == "cremation" else "⚰️"
+            morgue_tag = f" ({order.get('_morgue_name')})" if len(mids) > 1 else ""
+            b.row(InlineKeyboardButton(
+                text=f"{icon} {order.get('deceased', '?')}{morgue_tag}",
+                callback_data=f"rorder_{i}"
+            ))
+        await message.answer("Список заказов за сегодня:", reply_markup=b.as_markup())
+
+# Хендлер выбора заказа из списка
 @router.callback_query(F.data.startswith("rorder_"))
-async def select_order(cb: types.CallbackQuery, state: FSMContext):
+async def select_order_from_list(cb: types.CallbackQuery, state: FSMContext):
     idx = int(cb.data.split("_")[-1])
-    if 0 <= idx < len(active_orders):
-        await state.update_data(selected_order_idx=idx)
-        order = active_orders[idx]
-        icon = "🔥" if order.get("type") == "cremation" else ""
-        await cb.message.edit_text(f"{icon} {order.get('deceased', 'Без имени')}", reply_markup=kb_order_actions())
+    data = await state.get_data()
+    orders_list = data.get("orders_list", [])
+    
+    if 0 <= idx < len(orders_list):
+        order = orders_list[idx]
+        await state.update_data(current_order=order)
+        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
+        await cb.message.edit_text(f"{icon} {order.get('deceased', 'Без имени')} ({order.get('_morgue_name')})", reply_markup=kb_order_actions())
     await cb.answer()
 
+# Хендлер кнопки "Водителю"
 @router.callback_query(F.data == "rsend_driver")
 async def send_driver(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    idx = data.get("selected_order_idx", 0)
-    if 0 <= idx < len(active_orders):
-        await cb.message.answer(build_driver_card(active_orders[idx]))
+    order = data.get("current_order")
+    if order:
+        await cb.message.answer(build_driver_card(order))
+    else:
+        # Если в стейте нет (например, был 1 заказ)
+        await cb.message.answer("⚠️ Ошибка контекста заказа. Попробуй из списка.")
     await cb.answer()
 
+# Хендлер кнопки "Крематорий"
 @router.callback_query(F.data == "rsend_crem")
 async def send_crem(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    idx = data.get("selected_order_idx", 0)
-    if 0 <= idx < len(active_orders):
-        order = active_orders[idx]
+    order = data.get("current_order")
+    if order:
         if order.get("type") == "cremation":
             await cb.message.answer(build_crematorium_card(order))
         else:
             await cb.message.answer("⚠️ Это похороны.")
+    else:
+        await cb.message.answer("⚠️ Ошибка контекста.")
     await cb.answer()

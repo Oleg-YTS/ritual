@@ -1,6 +1,5 @@
 """
 БЛОК 1: МОРГ — добавление тел, удаление, закрытие смены
-Версия: Рабочая (до рефакторинга меню)
 """
 
 import os
@@ -18,6 +17,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
 from utils.reports import MORGUE_CONFIG, calculate_shift_finances, format_shift_report
 from database.github_backup import gh_backup
+from keyboards.menus import (
+    kb_main_menu, kb_select_morgue_add, kb_select_morgue_close,
+    kb_select_morgue_remove, kb_body_type, kb_body_source,
+    kb_payment_status, kb_bodies_for_removal, kb_removal_reason,
+    ALL_MENU_BUTTONS, kb_role_switcher
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,90 +37,20 @@ morgue2_db = MorgueStorage("morgue2")
 MORGUE_DBS = {"morgue1": morgue1_db, "morgue2": morgue2_db}
 
 # ============================================================
-# КЛАВИАТУРЫ
-# ============================================================
-
-def kb_main_menu(role: str):
-    b = ReplyKeyboardBuilder()
-    b.row(KeyboardButton(text="➕ Добавить тело"))
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        b.row(KeyboardButton(text="🔒 Закрыть смена"))
-        b.row(KeyboardButton(text="🗑️ Удалить тело"))
-    b.row(KeyboardButton(text="🕯️ Ритуальный заказ"))
-    b.row(KeyboardButton(text="📋 Мои заказы"))
-    if role in ["admin", "manager_morg1", "manager_morg2"]:
-        b.row(KeyboardButton(text="📊 Отчёт за период"))
-    if role == "admin":
-        b.row(KeyboardButton(text="📈 Статистика"))
-        b.row(KeyboardButton(text="👥 Пользователи"))
-    return b.as_markup(resize_keyboard=True)
-
-def kb_select_morgue_add():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="add_m1")],
-        [InlineKeyboardButton(text="🏥 Мира 11", callback_data="add_m2")]
-    ])
-
-def kb_select_morgue_close():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="close_m1")],
-        [InlineKeyboardButton(text="🏥 Мира 11", callback_data="close_m2")]
-    ])
-
-def kb_select_morgue_remove():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏥 Первомайская 13", callback_data="rm_m1")],
-        [InlineKeyboardButton(text="🏥 Мира 11", callback_data="rm_m2")]
-    ])
-
-def kb_body_type():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Стандарт", callback_data="btype_std")],
-        [InlineKeyboardButton(text="Не стандарт", callback_data="btype_nstd")]
-    ])
-
-def kb_body_source():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Стационар", callback_data="bsrc_stat")],
-        [InlineKeyboardButton(text="Амбулаторно", callback_data="bsrc_amb")]
-    ])
-
-def kb_payment_status(bodies: list):
-    b = InlineKeyboardBuilder()
-    for i, body in enumerate(bodies):
-        status = "✅" if body.get("paid") else "❌"
-        b.row(InlineKeyboardButton(text=f"{status} {body['surname']}", callback_data=f"pay_{i}"))
-    b.row(InlineKeyboardButton(text="💰 РАССЧИТАТЬ", callback_data="calc_done"))
-    return b.as_markup()
-
-def kb_bodies_for_removal(bodies: list):
-    b = InlineKeyboardBuilder()
-    for i, body in enumerate(bodies):
-        if body.get("removed"): continue
-        b.row(InlineKeyboardButton(text=f"🗑️ {body['surname']}", callback_data=f"rm_body_{i}"))
-    return b.as_markup()
-
-def kb_removal_reason():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="БСМЭ", callback_data="rmreason_bsme")],
-        [InlineKeyboardButton(text="Другая причина", callback_data="rmreason_other")]
-    ])
-
-# ============================================================
 # КОНСТАНТЫ
 # ============================================================
-MENU_BUTTONS = [
-    "➕ Добавить тело", "🔒 Закрыть смена", "🗑️ Удалить тело",
-    "🕯️ Ритуальный заказ", "📋 Мои заказы", "📊 Отчёт за период",
-    "🚗 Кто вывез", "📈 Статистика", "👥 Пользователи"
-]
+MORGUE_NAMES = {
+    "morgue1": "Первомайская 13",
+    "morgue2": "Мира 11"
+}
+
+MENU_BUTTONS = ALL_MENU_BUTTONS
 
 # ============================================================
 # FSM
 # ============================================================
 
 class AddBodyFSM(StatesGroup):
-    select_morgue = State()
     surname = State()
     body_type = State()
     source = State()
@@ -180,12 +115,30 @@ def find_real_index(bodies, active_index):
 # ============================================================
 
 @router.message(F.text == "/start")
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message, state: FSMContext):
     user = get_user(message.from_user.id)
     if not user:
         await message.answer(f"⚠️ Вас нет в списке.\nID: {message.from_user.id}")
         return
-    await message.answer(f"👋 {user['name']}\nМеню:", reply_markup=kb_main_menu(user["role"]))
+
+    role = user["role"]
+    await state.clear()
+    await message.answer(f"👋 {user['name']}\nМеню:", reply_markup=kb_main_menu(role))
+
+    user_morgue = get_user_morgue(message.from_user.id)
+    if role == "admin":
+        await message.answer("🏥 Выбери активный морг:", reply_markup=kb_select_morgue_add())
+    else:
+        if user_morgue:
+            await state.update_data(morgue_id=user_morgue)
+            await message.answer(f"🏥 Твой морг: {MORGUE_NAMES[user_morgue]}")
+
+@router.callback_query(F.data.in_(["add_m1", "add_m2"]))
+async def set_admin_morgue(cb: types.CallbackQuery, state: FSMContext):
+    mid = "morgue1" if cb.data == "add_m1" else "morgue2"
+    await state.update_data(morgue_id=mid)
+    await cb.message.edit_text(f"✅ Выбран: {MORGUE_NAMES[mid]}\nТеперь работай через меню.")
+    await cb.answer()
 
 # ============================================================
 # ДОБАВЛЕНИЕ ТЕЛА
@@ -195,21 +148,26 @@ async def cmd_start(message: types.Message):
 async def start_add_body(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "add"):
         await message.answer("⚠️ Нет прав."); return
-    await state.clear()
+    
+    data = await state.get_data()
+    if data.get("morgue_id"):
+        await message.answer("Фамилия:")
+        await state.set_state(AddBodyFSM.surname)
+        return
+
     user_morgue = get_user_morgue(message.from_user.id)
     if user_morgue:
         await state.update_data(morgue_id=user_morgue)
         await message.answer("Фамилия:")
         await state.set_state(AddBodyFSM.surname)
     else:
-        await message.answer("Морг:", reply_markup=kb_select_morgue_add())
-        await state.set_state(AddBodyFSM.select_morgue)
+        await message.answer("Выбери морг:", reply_markup=kb_select_morgue_add())
 
 @router.callback_query(F.data.in_(["add_m1", "add_m2"]))
 async def add_select_morgue(cb: types.CallbackQuery, state: FSMContext):
     mid = "morgue1" if cb.data == "add_m1" else "morgue2"
     await state.update_data(morgue_id=mid)
-    await cb.message.edit_text(f"🏥 {MORGUE_CONFIG[mid]['name']}\n\nФамилия:")
+    await cb.message.edit_text(f"🏥 {MORGUE_NAMES[mid]['name']}\n\nФамилия:")
     await cb.answer()
     await state.set_state(AddBodyFSM.surname)
 
@@ -236,6 +194,14 @@ async def add_source(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     mid = data["morgue_id"]
     tid = cb.from_user.id
+    
+    db = MORGUE_DBS[mid]
+    shift = db.get_active_shift()
+    if not shift:
+        user = get_user(tid)
+        name = user.get("name", "Unknown") if user else "Unknown"
+        shift = db.create_shift(tid, name)
+    
     body = {
         "surname": data["surname"],
         "type": data["body_type"],
@@ -244,14 +210,17 @@ async def add_source(cb: types.CallbackQuery, state: FSMContext):
         "removed": False,
         "organization": ""
     }
-    shift = get_or_create_shift(tid, mid)
-    db = MORGUE_DBS[mid]
+    
     db.add_body(shift["shift_id"], body)
     src_name = "Стационар" if src == "stat" else "Амбулаторно"
     total = len([b for b in shift["bodies"] if not b.get("removed")])
-    await cb.message.edit_text(f"✅ {body['surname']} ({src_name})\nТел: {total}")
+    
+    await cb.message.edit_text(f"✅ {body['surname']} ({src_name})\nВсего тел: {total}")
     await cb.answer()
-    await cb.message.answer("Далее:", reply_markup=kb_main_menu(get_user(cb.from_user.id)["role"]))
+    
+    # ЦИКЛ: Сразу просим следующую фамилию
+    await cb.message.answer("Следующая фамилия (или выбери действие в меню):")
+    await state.set_state(AddBodyFSM.surname)
 
 # ============================================================
 # УДАЛЕНИЕ ТЕЛА
@@ -261,13 +230,17 @@ async def add_source(cb: types.CallbackQuery, state: FSMContext):
 async def start_remove_body(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "remove"):
         await message.answer("⚠️ Нет прав."); return
-    await state.clear()
+    
+    data = await state.get_data()
+    if data.get("morgue_id"):
+        await _show_bodies_for_removal(message, data["morgue_id"], state)
+        return
+
     user_morgue = get_user_morgue(message.from_user.id)
     if user_morgue:
         await _show_bodies_for_removal(message, user_morgue, state)
     else:
         await message.answer("Морг:", reply_markup=kb_select_morgue_remove())
-        await state.set_state(RemoveBodyFSM.reason)
 
 @router.callback_query(F.data.in_(["rm_m1", "rm_m2"]))
 async def rm_select_morgue(cb: types.CallbackQuery, state: FSMContext):
@@ -321,7 +294,7 @@ async def rm_reason_other(cb: types.CallbackQuery, state: FSMContext):
     await cb.answer()
     await state.set_state(RemoveBodyFSM.custom_reason)
 
-@router.message(RemoveBodyFSM.custom_reason)
+@router.message(RemoveBodyFSM.custom_reason, ~F.text.in_(MENU_BUTTONS))
 async def rm_custom_reason(message: types.Message, state: FSMContext):
     reason = message.text.strip()
     if not reason:
@@ -350,7 +323,12 @@ async def rm_custom_reason(message: types.Message, state: FSMContext):
 async def start_close_shift(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "close"):
         await message.answer("⚠️ Нет прав."); return
-    await state.clear()
+    
+    data = await state.get_data()
+    if data.get("morgue_id"):
+        await _do_close_shift(message, data["morgue_id"], state)
+        return
+
     user_morgue = get_user_morgue(message.from_user.id)
     if user_morgue:
         await _do_close_shift(message, user_morgue, state)
@@ -422,7 +400,7 @@ async def calc_done(cb: types.CallbackQuery, state: FSMContext):
         await cb.answer()
         await _finish_close(cb.message, data["morgue_id"], data["shift_id"], state, 0)
 
-@router.message(CloseShiftFSM.org_input)
+@router.message(CloseShiftFSM.org_input, ~F.text.in_(MENU_BUTTONS))
 async def org_input(message: types.Message, state: FSMContext):
     org = message.text.strip().upper()
     if not org:

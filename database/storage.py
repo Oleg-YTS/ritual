@@ -184,10 +184,21 @@ class MorgueStorage(JSONStorage):
         return False
     
     def add_order(self, shift_id: str, order_data: Dict[str, Any]):
+        """Старый метод (для совместимости, если нужен) - добавляет в смену"""
+        # Теперь заказы будем хранить отдельно, но этот метод оставим для безопасности
+        # Логика переехала в add_global_order
+        return self.add_global_order(order_data)
+
+    def add_global_order(self, order_data: Dict[str, Any]):
+        """Сохраняет заказ в общий список заказов морга (не привязано к смене)"""
         data = self.read()
-        for shift in data.get("shifts", []):
-            if shift["shift_id"] == shift_id:
-                shift["orders"].append(order_data)
-                self.write(data)
-                return True
-        return False
+        if "orders" not in data:
+            data["orders"] = []
+        data["orders"].append(order_data)
+        self.write(data)
+        return True
+
+    def get_all_orders(self) -> List[Dict[str, Any]]:
+        """Возвращает все заказы из общего списка"""
+        data = self.read()
+        return data.get("orders", [])

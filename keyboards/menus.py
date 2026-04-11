@@ -7,51 +7,25 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 # Все кнопки меню — для фильтрации от FSM
 ALL_MENU_BUTTONS = [
     "➕ Добавить тело", "🗑️ Удалить тело",
-    "🕯️ Ритуальный заказ", "📋 Мои заказы",
+    "⚰️ Похороны", "🔥 Кремация", "📋 Мои заказы",
     "🚕 Водителю", "🔒 Закрыть смена",
     "📈 Статистика", "📊 Отчёт за период",
-    "👥 Пользователи",
-    "🧪 Тест роли"
+    "👥 Пользователи", "🧪 Тест роли"
 ]
 
 def kb_main_menu(role: str = None):
     """Меню по ролям — сетка 2 столбца"""
     b = ReplyKeyboardBuilder()
-
-    b.row(
-        KeyboardButton(text="➕ Добавить тело"),
-        KeyboardButton(text="🗑️ Удалить тело")
-    )
-    b.row(
-        KeyboardButton(text="🕯️ Ритуальный заказ"),
-        KeyboardButton(text="📋 Мои заказы")
-    )
-
+    b.row(KeyboardButton(text="➕ Добавить тело"), KeyboardButton(text="🗑️ Удалить тело"))
+    b.row(KeyboardButton(text="⚰️ Похороны"), KeyboardButton(text="🔥 Кремация"))
+    b.row(KeyboardButton(text="📋 Мои заказы"))
     if role in ["admin", "manager_morg1", "manager_morg2"]:
         b.row(KeyboardButton(text="🔒 Закрыть смена"))
-
-    b.row(
-        KeyboardButton(text="📈 Статистика"),
-        KeyboardButton(text="📊 Отчёт за период")
-    )
-
+    b.row(KeyboardButton(text="📈 Статистика"), KeyboardButton(text="📊 Отчёт за период"))
     if role == "admin":
         b.row(KeyboardButton(text="👥 Пользователи"))
-
-    # Тест роли — только для админа (Евсеев)
     b.row(KeyboardButton(text="🧪 Тест роли"))
-
     return b.as_markup(resize_keyboard=True, input_field_placeholder="Выбери действие:")
-
-def kb_role_switcher():
-    """Inline-кнопки для смены роли (тест)"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Админ", callback_data="test_role_admin")],
-        [InlineKeyboardButton(text="Менеджер М13", callback_data="test_role_manager_morg1"),
-         InlineKeyboardButton(text="Менеджер М11", callback_data="test_role_manager_morg2")],
-        [InlineKeyboardButton(text="Агент М13", callback_data="test_role_agent_morg1"),
-         InlineKeyboardButton(text="Агент М11", callback_data="test_role_agent_morg2")]
-    ])
 
 def kb_select_morgue_add():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -104,12 +78,6 @@ def kb_removal_reason():
         [InlineKeyboardButton(text="Другая причина", callback_data="rmreason_other")]
     ])
 
-def kb_ritual_type():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Похороны", callback_data="rtype_funeral")],
-        [InlineKeyboardButton(text="Кремация", callback_data="rtype_cremation")]
-    ])
-
 def kb_morgue_location():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Первомайская 13", callback_data="rloc_m1")],
@@ -133,9 +101,12 @@ def kb_urn_color():
 def kb_extras(selected: list = None):
     if selected is None: selected = []
     extras = {
-        "large_body": "Крупное тело", "short_farewell": "Короткое прощание",
-        "polished_coffin": "Полированный гроб", "hall": "Зал",
-        "hall_blessing": "Зал + отпевание", "urgent": "Срочная кремация"
+        "large_body": "Крупное тело",
+        "short_farewell": "Короткое прощание",
+        "polished_coffin": "Полированный гроб",
+        "hall": "Зал",
+        "hall_blessing": "Зал + отпевание",
+        "urgent": "Срочная кремация"
     }
     b = InlineKeyboardBuilder()
     for key, label in extras.items():
@@ -147,7 +118,7 @@ def kb_extras(selected: list = None):
 def kb_order_select(orders: list):
     b = InlineKeyboardBuilder()
     for i, order in enumerate(orders):
-        icon = "🔥" if order.get("type") == "cremation" else ""
+        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
         b.row(InlineKeyboardButton(text=f"{icon} {order.get('deceased', '?')}", callback_data=f"rorder_{i}"))
     return b.as_markup()
 
@@ -162,4 +133,11 @@ def kb_report_period():
         [InlineKeyboardButton(text="Неделя", callback_data="speriod_week")],
         [InlineKeyboardButton(text="Месяц", callback_data="speriod_month")],
         [InlineKeyboardButton(text="Квартал", callback_data="speriod_quarter")]
+    ])
+
+def kb_role_switcher():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Админ", callback_data="test_role_admin")],
+        [InlineKeyboardButton(text="Менеджер М13", callback_data="test_role_manager_morg1"), InlineKeyboardButton(text="Менеджер М11", callback_data="test_role_manager_morg2")],
+        [InlineKeyboardButton(text="Агент М13", callback_data="test_role_agent_morg1"), InlineKeyboardButton(text="Агент М11", callback_data="test_role_agent_morg2")]
     ])
