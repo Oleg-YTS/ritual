@@ -108,19 +108,14 @@ async def start_cremation(message: types.Message, state: FSMContext):
 async def _start_ritual_flow(message, state, otype: str):
     if not check_perm(message.from_user.id, "order"):
         await message.answer("⚠️ Нет прав."); return
-
-    user_morgue = get_user_morgue(message.from_user.id)
+    
+    await state.update_data(type=otype)
+    await state.clear()
     await state.update_data(type=otype)
 
-    if user_morgue:
-        # Сотрудник — сразу дата
-        await state.update_data(morgue_id=user_morgue)
-        await message.answer("📅 Дата мероприятия (ДД.ММ.ГГГГ):")
-        await state.set_state(RitualFSM.event_date)
-    else:
-        # Админ — выбор морга
-        await message.answer("Где находится тело?", reply_markup=kb_morgue_location())
-        await state.set_state(RitualFSM.select_morgue)
+    # Всегда спрашиваем выбор морга у всех (Агент, Менеджер, Админ)
+    await message.answer("📍 Где находится тело?", reply_markup=kb_morgue_location())
+    await state.set_state(RitualFSM.select_morgue)
 
 @router.callback_query(F.data.in_(["rloc_m1", "rloc_m2", "rloc_other"]), RitualFSM.select_morgue)
 async def select_location(cb: types.CallbackQuery, state: FSMContext):
