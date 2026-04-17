@@ -451,11 +451,13 @@ def generate_period_report(shifts: List[Dict[str, Any]], period_days: int = 7, m
     report += f"📉 Общий расход: {total_expense}₽\n"
     report += f"✅ Чистая прибыль: {total_profit}₽\n"
     
+    # Раздел вывезенных тел
     if removed_bodies:
         report += f"\n{'_' * 30}\n"
-        report += "🗑️ Удалённые тела (БСМЭ):\n"
+        report += "🚗 ВЫВЕЗЛИ:\n"
         for body in removed_bodies:
-            reason = body.get("removed_reason", "Не указано")
-            report += f"• {body.get('surname', '')} → {reason}\n"
+            surname = body.get('surname', '')
+            org = body.get('organization', 'Не указано')
+            report += f"{surname} → {org}\n"
     
     return report
