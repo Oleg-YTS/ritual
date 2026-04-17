@@ -5,8 +5,8 @@
 import os
 import sys
 import logging
-from datetime import datetime
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timezone
+from typing import List, Dict, Any, Optional
 
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
@@ -345,7 +345,9 @@ async def show_my_orders(message: types.Message, state: FSMContext):
     
     # Собираем заказы
     orders_to_show = []
-    today_str = datetime.now().strftime("%d.%m.%Y") # Формат 18.04.2026
+    # Используем Московский часовой пояс (UTC+3)
+    moscow_time = datetime.now(timezone.utc) + timedelta(hours=3)
+    today_str = moscow_time.strftime("%d.%m.%Y")  # Формат 18.04.2026
 
     # Если админ - смотрим оба морга, иначе только свой
     mids = ["morgue1", "morgue2"] if not user_morgue else [user_morgue]
