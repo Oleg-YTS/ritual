@@ -451,13 +451,35 @@ def generate_period_report(shifts: List[Dict[str, Any]], period_days: int = 7, m
     report += f"📉 Общий расход: {total_expense}₽\n"
     report += f"✅ Чистая прибыль: {total_profit}₽\n"
     
-    # Раздел вывезенных тел
-    if removed_bodies:
+    # Раздел вывезенных тел (неоплаченные + удалённые)
+    all_removed = []
+    
+    for shift in shifts:
+        shift_date = datetime.fromisoformat(shift["start_time"]) if shift.get("start_time") else None
+        if shift_date and shift_date < cutoff_date:
+            continue
+        if morgue_id and shift.get("morgue_id") != morgue_id:
+            continue
+        
+        bodies = shift.get("bodies", [])
+        # Проблема: функция calculate_shift_finances не возвращает неоплаченные
+        # Собираем неоплаченные и удалённые вручную
+        for body in bodies:
+            if not body.get("paid") and not body.get("removed"):
+                # Неоплаченное — нужно найти организацию
+                org = body.get("organization", "")
+                if org:
+                    all_removed.append({"surname": body.get("surname", ""), "organization": org})
+            elif body.get("removed"):
+                # Удалённое
+                org = body.get("organization", "")
+                if org:
+                    all_removed.append({"surname": body.get("surname", ""), "organization": org})
+    
+    if all_removed:
         report += f"\n{'_' * 30}\n"
-        report += "🚗 ВЫВЕЗЛИ:\n"
-        for body in removed_bodies:
-            surname = body.get('surname', '')
-            org = body.get('organization', 'Не указано')
-            report += f"{surname} → {org}\n"
+        report += f"🚗 ВЫВЕЗЛИ: {len(all_removed)}\n"
+        for item in all_removed:
+            report += f"{item['surname']} → {item['organization']}\n"
     
     return report
