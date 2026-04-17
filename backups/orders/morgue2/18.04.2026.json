@@ -1,0 +1,32 @@
+[
+  {
+    "order_date": "2026-04-18 00:27",
+    "creation_date": "18.04.2026",
+    "event_date": "20.04.2026",
+    "type": "funeral",
+    "customer_name": "МИРА ТЕСТ",
+    "customer_phone": "89110001122",
+    "deceased": "МИРА ТЕСТ",
+    "morgue_location": "Мира 11",
+    "phone": "89110001122",
+    "temple": "ТЕСТ",
+    "cemetery": "12"
+  },
+  {
+    "order_date": "2026-04-18 00:50",
+    "creation_date": "18.04.2026",
+    "event_date": "20.04.2026",
+    "type": "cremation",
+    "customer_name": "ТОСТ 11",
+    "customer_phone": "89112003030",
+    "deceased": "ТОСТ22",
+    "morgue_location": "Мира 11",
+    "phone": "89112003030",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall_blessing"
+    ]
+  }
+]

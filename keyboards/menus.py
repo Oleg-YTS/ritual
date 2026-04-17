@@ -9,8 +9,7 @@ ALL_MENU_BUTTONS = [
     "➕ Добавить тело", "🗑️ Удалить тело",
     "⚰️ Похороны", "🔥 Кремация", "📋 Мои заказы",
     "🚕 Водителю", "🔒 Закрыть смена",
-    "📈 Статистика", "📊 Отчёт за период",
-    "🧪 Тест роли"
+    "📈 Статистика", "📊 Отчёт за период"
 ]
 
 def kb_main_menu(role: str = None):
@@ -141,8 +140,5 @@ def kb_report_period():
     ])
 
 def kb_role_switcher():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Админ", callback_data="test_role_admin")],
-        [InlineKeyboardButton(text="Менеджер М13", callback_data="test_role_manager_morg1"), InlineKeyboardButton(text="Менеджер М11", callback_data="test_role_manager_morg2")],
-        [InlineKeyboardButton(text="Агент М13", callback_data="test_role_agent_morg1"), InlineKeyboardButton(text="Агент М11", callback_data="test_role_agent_morg2")]
-    ])
+    # Удалено - тест ролей не используется
+    return None

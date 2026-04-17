@@ -61,9 +61,10 @@ MORGUE_NAMES = {"morgue1": "Первомайская 13", "morgue2": "Мира 1
 # ПЛАНИРОВЩИК (ФОНОВЫЕ ЗАДАЧИ)
 # ============================================================
 from database.storage import UsersStorage, MorgueStorage
+from database.archive import archive_weekly, archive_monthly, archive_quarterly, is_quarter_end, get_week_number
 
 async def scheduler():
-    """Фоновая задача: напоминания и авто-закрытие"""
+    """Фоновая задача: напоминания, авто-закрытие и архивация"""
     logger.info("🕒 Планировщик запущен")
     
     users_db = UsersStorage()
@@ -72,12 +73,18 @@ async def scheduler():
     DBS = {"morgue1": morgue1_db, "morgue2": morgue2_db}
     
     sent_reminders = {} # Чтобы не спамить
+    weekly_archived = set()  # Архивированные недели
+    monthly_archived = set() # Архивированные месяцы
+    quarterly_archived = set() # Архивированные кварталы
 
     while True:
         try:
             now = datetime.now()
             current_time = now.strftime("%H:%M")
             date_key = now.strftime("%Y-%m-%d")
+            week_key = f"{now.year}-W{get_week_number(now):02d}"
+            month_key = f"{now.year}-{now.month:02d}"
+            quarter_key = f"{now.year}-Q{(now.month - 1) // 3 + 1}"
 
             # --- 1. НАПОМИНАНИЯ (14:30, 15:00, 15:20) ---
             if current_time in ["14:30", "15:00", "15:20"]:
@@ -120,6 +127,56 @@ async def scheduler():
                                 role = udata.get("role", "")
                                 if ("morg1" in role and mid == "morgue1") or ("morg2" in role and mid == "morgue2"):
                                     await bot.send_message(int(uid_str), f"🔒 Смена в {MORGUE_NAMES[mid]} закрыта автоматически (15:30).")
+
+            # --- 3. НЕДЕЛЬНАЯ АРХИВАЦИЯ (Воскресенье 23:00) ---
+            if now.weekday() == 6 and now.hour == 23 and now.minute == 0:  # Воскресенье
+                if week_key not in weekly_archived:
+                    weekly_archived.add(week_key)
+                    logger.info(f"📦 Начинаю недельную архивацию {week_key}")
+                    try:
+                        r1 = archive_weekly("morgue1")
+                        r2 = archive_weekly("morgue2")
+                        if r1 and r2:
+                            logger.info(f"✅ Недельный архив {week_key} создан")
+                        else:
+                            logger.warning(f"⚠️ Недельный архив {week_key} частично выполнен")
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка недельной архивации: {e}")
+
+            # --- 4. КОНТРОЛЬ НЕДЕЛЬНОГО БЭКАПА (Воскресенье 23:50) ---
+            if now.weekday() == 6 and now.hour == 23 and now.minute == 50:
+                if week_key not in weekly_archived:
+                    logger.warning(f"⚠️ Недельный бэкап {week_key} не создан, пропускаем")
+
+            # --- 5. МЕСЯЧНАЯ АРХИВАЦИЯ (1-е число 00:10) ---
+            if now.day == 1 and now.hour == 0 and now.minute == 10:
+                if month_key not in monthly_archived:
+                    monthly_archived.add(month_key)
+                    logger.info(f"📦 Начинаю месячную архивацию {month_key}")
+                    try:
+                        r1 = archive_monthly("morgue1")
+                        r2 = archive_monthly("morgue2")
+                        if r1 and r2:
+                            logger.info(f"✅ Месячный архив {month_key} создан")
+                        else:
+                            logger.warning(f"⚠️ Месячный архив {month_key} частично выполнен")
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка месячной архивации: {e}")
+
+            # --- 6. КВАРТАЛЬНАЯ АРХИВАЦИЯ (Конец квартала 00:10) ---
+            if is_quarter_end(now) and now.hour == 0 and now.minute == 10:
+                if quarter_key not in quarterly_archived:
+                    quarterly_archived.add(quarter_key)
+                    logger.info(f"📦 Начинаю квартальную архивацию {quarter_key}")
+                    try:
+                        r1 = archive_quarterly("morgue1")
+                        r2 = archive_quarterly("morgue2")
+                        if r1 and r2:
+                            logger.info(f"✅ Квартальный архив {quarter_key} создан")
+                        else:
+                            logger.warning(f"⚠️ Квартальный архив {quarter_key} частично выполнен")
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка квартальной архивации: {e}")
 
             # Сброс старых ключей (раз в сутки)
             if now.hour == 0 and now.minute == 1:

@@ -16,6 +16,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
+from database.order_storage import save_order as save_order_to_file, get_orders_by_date, get_all_orders_for_morgue
+from database.crm import add_order as crm_add_order
 from utils.reports import build_driver_card, build_crematorium_card
 from keyboards.menus import (
     kb_main_menu, kb_morgue_location,
@@ -86,10 +88,15 @@ def check_perm(tid, action):
     return action in perms.get(role, [])
 
 def save_order_to_shift(order: dict, morgue_id: str) -> bool:
-    """Теперь сохраняет заказ в общий пул морга, а не в смену"""
+    """Сохраняет заказ в смену морга И в файл по дате"""
+    # 1. Сохраняем в глобальный список морга (для оперативного доступа)
     db = MORGUE_DBS.get(morgue_id)
-    if not db: return False
-    return db.add_global_order(order)
+    saved_to_db = db.add_global_order(order) if db else False
+    
+    # 2. Сохраняем в файл по дате мероприятия (для архива и статистики)
+    saved_to_file = save_order_to_file(morgue_id, order)
+    
+    return saved_to_db or saved_to_file
 
 # ============================================================
 # ХЕНДЛЕРЫ (Прямой запуск кнопок)
@@ -283,17 +290,32 @@ async def _save_and_send(message, state: FSMContext):
         order["urn"] = "Вечная память" if urn == "cardboard" else f"Пластик ({data.get('urn_color', '')})"
         order["extras"] = data.get("extras", [])
     
-    actual_morgue = loc if loc in ["morgue1", "morgue2"] else get_user_morgue(message.from_user.id)
+    # Определяем морг для сохранения заказа
+    if loc in ["morgue1", "morgue2"]:
+        actual_morgue = loc
+    else:
+        # Если выбрано "Другое место" или нет выбора
+        user_morgue = get_user_morgue(message.from_user.id)
+        if user_morgue:
+            actual_morgue = user_morgue  # Менеджер/Агент — свой морг
+        else:
+            # Админ без привязки — сохраняем в ОБА морга
+            actual_morgue = None
     
     try:
         if actual_morgue:
             save_order_to_shift(order, actual_morgue)
+            logger.info(f"Заказ сохранён в {actual_morgue}")
         else:
-            # Если админ и выбрал "Другое место" (нет привязки к моргу)
-            # Сохраняем в ОБА файла, чтобы не потерять отчетность
+            # Админ без привязки к моргу — сохраняем в ОБА файла
             save_order_to_shift(order, "morgue1")
             save_order_to_shift(order, "morgue2")
             logger.info(f"Заказ сохранен в оба морга (Admin/Other location)")
+        
+        # Сохраняем в CRM базу для обзвона и памятников
+        crm_add_order(order)
+        logger.info(f"Заказ добавлен в CRM: {order.get('deceased')}")
+        
     except Exception as e:
         logger.error(f"ОШИБКА СОХРАНЕНИЯ ЗАКАЗА: {e}")
         await message.answer(f"⚠️ Ошибка сохранения заказа: {e}")
@@ -313,7 +335,7 @@ async def _save_and_send(message, state: FSMContext):
     role = user["role"] if user else "admin"
     await message.answer("Далее:", reply_markup=kb_main_menu(role))
 
-# Мои заказы (Чтение из БД за сегодня)
+# Мои заказы (Чтение из файлов по ДАТЕ ОФОРМЛЕНИЯ - текущая дата)
 @router.message(F.text == "📋 Мои заказы")
 async def show_my_orders(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "cards"):
@@ -323,18 +345,16 @@ async def show_my_orders(message: types.Message, state: FSMContext):
     
     # Собираем заказы
     orders_to_show = []
-    today_str = datetime.now().strftime("%d.%m.%Y") # Формат 11.04.2026
+    today_str = datetime.now().strftime("%d.%m.%Y") # Формат 18.04.2026
 
     # Если админ - смотрим оба морга, иначе только свой
     mids = ["morgue1", "morgue2"] if not user_morgue else [user_morgue]
     
     for mid in mids:
-        db = MORGUE_DBS[mid]
-        all_orders = db.get_all_orders()
-        # Фильтр заказов: ищем заказы, СОЗДАННЫЕ сегодня
+        # Читаем ВСЕ заказы морга и фильтруем по ДАТЕ ОФОРМЛЕНИЯ
+        all_orders = get_all_orders_for_morgue(mid)
         for order in all_orders:
             if order.get("creation_date") == today_str:
-                # Добавляем имя морга для наглядности
                 order["_morgue_name"] = MORGUE_NAMES[mid]
                 orders_to_show.append(order)
 
@@ -342,24 +362,26 @@ async def show_my_orders(message: types.Message, state: FSMContext):
         await message.answer(f"📅 Заказов за сегодня ({today_str}) не найдено.")
         return
 
-    if len(orders_to_show) == 1:
-        order = orders_to_show[0]
-        await state.update_data(orders_list=orders_to_show, current_order=order) # Сохраняем в стейт
-        morgue_label = f" ({order.get('_morgue_name')})" if len(mids) > 1 else ""
+    # Формируем текст с информацией о заказах
+    text = f"📋 ЗАКАЗЫ ЗА СЕГОДНЯ ({today_str}):\n"
+    text += "_" * 35 + "\n"
+    
+    for i, order in enumerate(orders_to_show, 1):
         icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-        await message.answer(f"{icon} {order.get('deceased', 'Без имени')}{morgue_label}", reply_markup=kb_order_actions())
-    else:
-        # Если заказов много, формируем список и отправляем ОДНИМ сообщением
-        await state.update_data(orders_list=orders_to_show) # Сохраняем список в стейт для callbacks
-        b = InlineKeyboardBuilder()
-        for i, order in enumerate(orders_to_show):
-            icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-            morgue_tag = f" ({order.get('_morgue_name')})" if len(mids) > 1 else ""
-            b.row(InlineKeyboardButton(
-                text=f"{icon} {order.get('deceased', '?')}{morgue_tag}",
-                callback_data=f"rorder_{i}"
-            ))
-        await message.answer("Список заказов за сегодня:", reply_markup=b.as_markup())
+        order_date = order.get("order_date", "?")[:16]  # Убираем секунды
+        event_date = order.get("event_date", "?")
+        deceased = order.get("deceased", "Без имени")
+        morgue = order.get("_morgue_name", MORGUE_NAMES[mid])
+        
+        text += f"\n{i}. {icon} {deceased}\n"
+        text += f"   📅 Дата заказа: {order_date}\n"
+        text += f"   📆 Дата события: {event_date}\n"
+        text += f"   🏥 Морг: {morgue}\n"
+
+    text += "\n" + "_" * 35 + f"\nВсего: {len(orders_to_show)} заказов"
+    
+    await state.update_data(orders_list=orders_to_show)
+    await message.answer(text)
 
 # Хендлер выбора заказа из списка
 @router.callback_query(F.data.startswith("rorder_"))

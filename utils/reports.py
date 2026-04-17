@@ -72,6 +72,28 @@ def calculate_shift_finances(shift: Dict[str, Any], morgue_id: str) -> Dict[str,
     }
 
 
+def format_orders_section(morgue_id: str) -> str:
+    """Форматирование раздела заказов в отчёте смены (читает из файлов на текущую дату)"""
+    from database.order_storage import get_orders_by_date
+    from datetime import datetime
+    
+    today_str = datetime.now().strftime("%d.%m.%Y")
+    orders = get_orders_by_date(morgue_id, today_str)
+    
+    if not orders:
+        return "📋 ЗАКАЗЫ: -"
+    
+    section = "📋 ЗАКАЗЫ:\n"
+    for order in orders:
+        icon = "⚰️" if order.get("type") == "funeral" else "🔥"
+        label = "Похороны" if order.get("type") == "funeral" else "Кремация"
+        event_date = order.get("event_date", "?")
+        deceased = order.get("deceased", "?")
+        section += f"{icon} {deceased} | {event_date} | {label}\n"
+    
+    return section
+
+
 def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
     """Форматирование отчёта по смене"""
     finances = calculate_shift_finances(shift, morgue_id)
@@ -81,7 +103,7 @@ def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
     date_str = start_time.strftime("%d.%m.%Y")
     
     report = f"📊 {morgue_name} | {date_str}\n"
-    report += f"{'━' * 30}\n"
+    report += f"{'_' * 30}\n"
     report += f"Всего тел: {finances['total_bodies']}\n"
     report += f"Оплачено: {finances['total_paid']}\n"
     report += f"Не оплачено: {finances['total_unpaid']}\n\n"
@@ -112,7 +134,7 @@ def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
                 report += f"{i}. ❌ {body['surname']} → {org}\n"
         report += "\n"
 
-    report += f"{'━' * 30}\n"
+    report += f"{'_' * 30}\n"
     report += f"💰 Доход: {finances['income']}₽\n"
     report += f"🧑‍⚕️ Санитары: {finances['sanitary_expense']}₽\n"
 
@@ -125,13 +147,131 @@ def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
     report += f"📉 Общий расход: {finances['total_expense']}₽\n"
     report += f"✅ Чистая прибыль: {finances['profit']}₽\n"
     
+    # Раздел удалённых тел
     if finances['removed_list']:
-        report += f"\n{'━' * 30}\n"
+        report += f"\n{'_' * 30}\n"
         report += "🗑️ УДАЛЁННЫЕ (БСМЭ):\n"
         for body in finances['removed_list']:
             reason = body.get("removed_reason", "Не указано")
             report += f"• {body['surname']} → {reason}\n"
     
+    # Раздел заказов (актуальные на текущую дату из файлов)
+    orders_section = format_orders_section(morgue_id)
+    report += f"\n{'_' * 30}\n"
+    report += orders_section
+    
+    return report
+
+
+def generate_driver_tasks(orders: List[Dict[str, Any]], morgue_filter: str = None) -> str:
+    """Формирование заданий водителям по заказам"""
+    if not orders:
+        return "🚚 ЗАДАНИЯ ВОДИТЕЛЯМ\n" + "_" * 30 + "\nНет активных заказов."
+    
+    # Фильтрация по моргу
+    if morgue_filter:
+        orders = [o for o in orders if o.get("morgue_id") == morgue_filter]
+    
+    # Сортировка по дате
+    def parse_date(order):
+        ev_date = order.get("event_date", "")
+        try:
+            if "." in ev_date:
+                d, m, y = ev_date.split(".")
+                return datetime(int(y), int(m), int(d))
+        except:
+            pass
+        return datetime.now()
+    
+    sorted_orders = sorted(orders, key=parse_date)
+    
+    report = "🚚 ЗАДАНИЯ ВОДИТЕЛЯМ\n"
+    report += "_" * 30 + "\n"
+    
+    for i, order in enumerate(sorted_orders, 1):
+        order_type = order.get("type", "funeral")
+        icon = "⚰️" if order_type == "funeral" else "🔥"
+        label = "Похороны" if order_type == "funeral" else "Кремация"
+        
+        report += f"\n{i}. {icon} {label} | {order.get('event_date', '?')}\n"
+        report += f"   Усопший: {order.get('deceased', '?')}\n"
+        report += f"   Морг: {order.get('morgue_location', '?')}\n"
+        
+        if order_type == "funeral":
+            if order.get("temple"):
+                report += f"   Храм: {order['temple']}\n"
+            if order.get("cemetery"):
+                report += f"   Кладбище: {order['cemetery']}\n"
+        else:
+            if order.get("temple"):
+                report += f"   Храм: {order['temple']}\n"
+            report += f"   → Крематорий\n"
+        
+        if order.get("phone"):
+            report += f"   Тел: {order['phone']}\n"
+    
+    report += "\n" + "_" * 30 + f"\nВсего: {len(sorted_orders)} заказов"
+    return report
+
+
+def generate_crematorium_tasks(orders: List[Dict[str, Any]]) -> str:
+    """Формирование заданий в крематорий"""
+    cremation_orders = [o for o in orders if o.get("type") == "cremation"]
+    
+    if not cremation_orders:
+        return "🔥 ЗАДАНИЯ КРЕМАТОРИЮ\n" + "_" * 30 + "\nНет заказов на кремацию."
+    
+    # Сортировка по дате
+    def parse_date(order):
+        ev_date = order.get("event_date", "")
+        try:
+            if "." in ev_date:
+                d, m, y = ev_date.split(".")
+                return datetime(int(y), int(m), int(d))
+        except:
+            pass
+        return datetime.now()
+    
+    sorted_orders = sorted(cremation_orders, key=parse_date)
+    
+    report = "🔥 ЗАДАНИЯ КРЕМАТОРИЮ\n"
+    report += "_" * 30 + "\n"
+    
+    for i, order in enumerate(sorted_orders, 1):
+        report += f"\n{i}. {order.get('deceased', '?')} | {order.get('event_date', '?')}\n"
+        report += f"   Морг: {order.get('morgue_location', '?')}\n"
+        
+        # Урна
+        urn_str = order.get("urn", "")
+        if not urn_str:
+            urn_type = order.get("urn_type", "")
+            urn_color = order.get("urn_color", "")
+            if urn_type == "plastic" and urn_color:
+                urn_str = f"Пластик ({urn_color})"
+            elif urn_type == "cardboard":
+                urn_str = "Вечная память"
+            else:
+                urn_str = urn_type or "Не указано"
+        report += f"   Урна: {urn_str}\n"
+        
+        # Дополнительные услуги
+        extras = order.get("extras", [])
+        if extras:
+            extras_map = {
+                "large_body": "Крупное тело",
+                "polished_coffin": "Полированный гроб",
+                "short_farewell": "Короткое прощание",
+                "hall": "Зал",
+                "hall_blessing": "Зал + отпевание",
+                "urgent": "Срочная"
+            }
+            extras_str = ", ".join([extras_map.get(e, e) for e in extras])
+            report += f"   Допы: {extras_str}\n"
+        
+        if order.get("temple"):
+            report += f"   Отпевание: {order['temple']}\n"
+    
+    report += "\n" + "_" * 30 + f"\nВсего: {len(sorted_orders)} кремаций"
     return report
 
 
@@ -141,7 +281,7 @@ def build_driver_card(order: Dict[str, Any]) -> str:
 
     if order_type == "funeral":
         card = "ЗАКАЗ ВОДИТЕЛЮ\n"
-        card += f"{'━' * 30}\n"
+        card += f"{'_' * 30}\n"
         card += f"Дата: {order.get('event_date', 'Не указано')}\n"
         card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
         card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
@@ -159,7 +299,7 @@ def build_driver_card(order: Dict[str, Any]) -> str:
         has_hall = "hall" in extras or "hall_blessing" in extras
 
         card = "ЗАКАЗ ВОДИТЕЛЮ (Кремация)\n"
-        card += f"{'━' * 30}\n"
+        card += f"{'_' * 30}\n"
         card += f"Дата: {order.get('event_date', 'Не указано')}\n"
         card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
         card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
@@ -207,7 +347,7 @@ def build_crematorium_card(order: Dict[str, Any]) -> str:
         extras_str = "Нет"
 
     card = "КРЕМАТОРИЙ\n"
-    card += f"{'━' * 30}\n"
+    card += f"{'_' * 30}\n"
     card += f"ФИО: {order.get('deceased', 'Не указано')}\n"
     card += f"Дата кремации: {order.get('event_date', 'Не указано')}\n"
     card += f"Урна: {urn_str}\n"
@@ -222,7 +362,7 @@ def generate_removed_report(shifts: List[Dict[str, Any]], period_days: int = 7) 
     cutoff_date = datetime.now() - timedelta(days=period_days)
     
     report = f"🚗 ОТЧЁТ «КТО ВЫВЕЗ» за {period_days} дней\n"
-    report += f"{'━' * 30}\n"
+    report += f"{'_' * 30}\n"
     
     removed_bodies = []
     
@@ -257,7 +397,7 @@ def generate_removed_report(shifts: List[Dict[str, Any]], period_days: int = 7) 
         for body in bodies:
             report += f"  • {body['date']} | {body['surname']} | {body['morgue']}\n"
     
-    report += f"\n{'━' * 30}\n"
+    report += f"\n{'_' * 30}\n"
     report += f"Всего вывезено: {len(removed_bodies)}\n"
     
     return report
@@ -270,7 +410,7 @@ def generate_period_report(shifts: List[Dict[str, Any]], period_days: int = 7, m
     period_name = "неделю" if period_days == 7 else "месяц" if period_days <= 31 else "квартал"
     
     report = f"📊 ОТЧЁТ ЗА {period_name.upper()}\n"
-    report += f"{'━' * 30}\n"
+    report += f"{'_' * 30}\n"
     
     total_income = 0
     total_sanitary = 0
@@ -312,7 +452,7 @@ def generate_period_report(shifts: List[Dict[str, Any]], period_days: int = 7, m
     report += f"✅ Чистая прибыль: {total_profit}₽\n"
     
     if removed_bodies:
-        report += f"\n{'━' * 30}\n"
+        report += f"\n{'_' * 30}\n"
         report += "🗑️ Удалённые тела (БСМЭ):\n"
         for body in removed_bodies:
             reason = body.get("removed_reason", "Не указано")

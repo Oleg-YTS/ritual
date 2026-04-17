@@ -435,9 +435,17 @@ async def _finish_close(message, morgue_id: str, shift_id: str, state: FSMContex
     user = get_user(message.from_user.id)
     name = user.get("name", "Unknown") if user else "Unknown"
     db.close_shift(shift_id, message.from_user.id, name)
-    gh_backup.backup_shift(shift, morgue_id)
+    
+    # Бэкап в GitHub с проверкой результата
+    backup_success = gh_backup.backup_shift(shift, morgue_id)
+    if not backup_success:
+        logger.error(f"❌ НЕ УДАЛОСЬ сохранить смену {shift_id} в GitHub!")
+        # Уведомляем пользователя об ошибке бэкапа
+        await message.answer("⚠️ <b>Внимание!</b>\nСмена закрыта, но бэкап в GitHub не выполнен.\nПроверьте логи или настройку GITHUB_TOKEN.")
+    
     report = format_shift_report(shift, morgue_id)
     await message.answer(report)
+    
     orders = shift.get("orders", [])
     if orders:
         orders_text = "\n━━━━ ЗАКАЗЫ В СМЕНЕ ━━━━\n"

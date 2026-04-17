@@ -16,7 +16,10 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
-from utils.reports import MORGUE_CONFIG, calculate_shift_finances, format_shift_report
+from utils.reports import (
+    MORGUE_CONFIG, calculate_shift_finances, format_shift_report,
+    generate_driver_tasks, generate_crematorium_tasks
+)
 from keyboards.menus import kb_main_menu, kb_report_period, ALL_MENU_BUTTONS
 
 logger = logging.getLogger(__name__)
@@ -293,3 +296,59 @@ def _generate_period_report(days: int, morgue_id: str) -> str:
             text += f"{icon} {o.get('deceased', '?')} — {label} — {o.get('event_date', '?')} — {o.get('morgue', '')}\n"
 
     return text
+
+
+# ============================================================
+# ЗАДАНИЯ ВОДИТЕЛЯМ И КРЕМАТОРИЮ
+# ============================================================
+
+@router.message(F.text == "🚚 Задания водителям")
+async def driver_tasks(message: types.Message, state: FSMContext):
+    """Показать задания водителям по всем заказам"""
+    user = get_user(message.from_user.id)
+    if not user: return
+    role = user.get("role", "")
+    
+    # Собираем все заказы из обоих моргов
+    all_orders = []
+    for mid in ["morgue1", "morgue2"]:
+        db = MORGUE_DBS[mid]
+        orders = db.get_all_orders()
+        for order in orders:
+            order["morgue_id"] = mid
+            all_orders.append(order)
+    
+    # Фильтруем по моргу если не админ
+    morgue_filter = None
+    if role != "admin":
+        user_morgue = get_user_morgue(message.from_user.id)
+        if user_morgue:
+            morgue_filter = user_morgue
+    
+    report = generate_driver_tasks(all_orders, morgue_filter)
+    await message.answer(report)
+    await message.answer("Далее:", reply_markup=kb_main_menu(role))
+
+
+@router.message(F.text == "🔥 Задания крематорию")
+async def crematorium_tasks(message: types.Message, state: FSMContext):
+    """Показать задания в крематорий"""
+    user = get_user(message.from_user.id)
+    if not user: return
+    role = user.get("role", "")
+    
+    # Собираем все заказы на кремацию
+    all_orders = []
+    for mid in ["morgue1", "morgue2"]:
+        db = MORGUE_DBS[mid]
+        orders = db.get_all_orders()
+        for order in orders:
+            if order.get("type") == "cremation":
+                order["morgue_id"] = mid
+                all_orders.append(order)
+    
+    report = generate_crematorium_tasks(all_orders)
+    await message.answer(report)
+    await message.answer("Далее:", reply_markup=kb_main_menu(role))
+
+
