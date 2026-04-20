@@ -398,11 +398,6 @@ async def handle_order_date(cb: types.CallbackQuery, state: FSMContext):
         yesterday = now - timedelta(days=1)
         target_date = yesterday.strftime("%d.%m.%Y")
         date_label = "вчера"
-        
-    # Добавляем корректировку на случай, если время еще не перешло на следующий день (00:00-02:00)
-    if now.hour < 3:  # Если сейчас 00:00-02:00, то "сегодня" — это ещё вчерашний день по местному времени
-        target_date = (now - timedelta(days=1)).strftime("%d.%m.%Y")
-        date_label = "вчера"
     
     # Собираем заказы
     orders_to_show = []
