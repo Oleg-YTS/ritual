@@ -32,7 +32,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-04-20 17:48",
+          "creation_date": "20.04.2026",
+          "event_date": "22.04.2026",
+          "type": "funeral",
+          "customer_name": "СИСЬКИН",
+          "customer_phone": "1111111",
+          "deceased": "ПИСЬКИН",
+          "morgue_location": "Первомайская 13",
+          "phone": "1111111",
+          "temple": "СЕМАХА",
+          "cemetery": "1-Е"
+        }
+      ],
       "closed": false
     }
   ]
