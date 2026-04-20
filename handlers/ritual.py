@@ -302,6 +302,14 @@ async def _save_and_send(message, state: FSMContext):
             # Админ без привязки — сохраняем в ОБА морга
             actual_morgue = None
     
+    # Читаем актуальные карточки из сохраненного order
+    driver_card = build_driver_card(order)
+    crem_card = build_crematorium_card(order) if otype == "cremation" else None
+    response = "✅ Заказ сохранён\n\n"
+    response += driver_card
+    if crem_card: response += "\n\n" + crem_card
+    response += "\n\nИспользуй 📋 Мои заказы для отправки"
+
     try:
         if actual_morgue:
             save_order_to_shift(order, actual_morgue)
@@ -320,14 +328,6 @@ async def _save_and_send(message, state: FSMContext):
         logger.error(f"ОШИБКА СОХРАНЕНИЯ ЗАКАЗА: {e}")
         await message.answer(f"⚠️ Ошибка сохранения заказа: {e}")
         return
-
-        # Читаем актуальные карточки из сохраненного order
-        driver_card = build_driver_card(order)
-        crem_card = build_crematorium_card(order) if otype == "cremation" else None
-        response = "✅ Заказ сохранён\n\n"
-        response += driver_card
-        if crem_card: response += "\n\n" + crem_card
-        response += "\n\nИспользуй 📋 Мои заказы для отправки"
     
     await message.answer(response)
     await state.clear()
