@@ -10,7 +10,7 @@
       "source": "stat",
       "paid": false,
       "removed": false,
-      "organization": "ШОС"
+      "organization": "ГРС"
     },
     {
       "surname": "ЧЕЛЫШКИН",
@@ -24,9 +24,9 @@
       "surname": "ЕВДОКИМОВА",
       "type": "std",
       "source": "stat",
-      "paid": false,
+      "paid": true,
       "removed": false,
-      "organization": "НЕИЗВЕТАЯ"
+      "organization": ""
     }
   ],
   "orders": [],
