@@ -15,7 +15,25 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-04-20 19:09",
+          "creation_date": "20.04.2026",
+          "event_date": "24.04.2020",
+          "type": "cremation",
+          "customer_name": "ПИСЮЛЬКИН",
+          "customer_phone": "221133",
+          "deceased": "САСЮЛЬКИН",
+          "morgue_location": "Мира 11",
+          "phone": "221133",
+          "temple": "СЕМАХА",
+          "cemetery": "",
+          "urn": "Вечная память",
+          "extras": [
+            "urgent"
+          ]
+        }
+      ],
       "closed": false
     }
   ]
