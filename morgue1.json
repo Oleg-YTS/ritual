@@ -45,6 +45,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ПОПЕЦ",
+          "type": "nstd",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
