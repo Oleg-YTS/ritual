@@ -279,31 +279,19 @@ def build_driver_card(order: Dict[str, Any]) -> str:
     """Создание карточки для водителя"""
     order_type = order.get("type", "funeral")
 
-    if order_type == "funeral":
-        card = "ЗАКАЗ ВОДИТЕЛЮ\n"
-        card += f"{'_' * 30}\n"
-        card += f"Дата: {order.get('event_date', 'Не указано')}\n"
-        card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
-        card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
+    card = "🚗\n\n"
+    card += f"Дата: {order.get('event_date', 'Не указано')}\n"
+    card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
+    card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
 
+    if order_type == "funeral":
         if order.get("temple"):
             card += f"Отпевание: {order['temple']}\n"
-
         if order.get("cemetery"):
             card += f"Кладбище: {order['cemetery']}\n"
-
-        card += f"Телефон: {order.get('phone', 'Не указано')}\n"
-
     else:  # cremation
         extras = order.get("extras", [])
         has_hall = "hall" in extras or "hall_blessing" in extras
-
-        card = "ЗАКАЗ ВОДИТЕЛЮ (Кремация)\n"
-        card += f"{'_' * 30}\n"
-        card += f"Дата: {order.get('event_date', 'Не указано')}\n"
-        card += f"Усопший: {order.get('deceased', 'Не указано')}\n"
-        card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
-
         if has_hall:
             card += f"Зал отпевания\n"
             card += f"Конечная точка: Крематорий\n"
@@ -312,7 +300,7 @@ def build_driver_card(order: Dict[str, Any]) -> str:
                 card += f"Храм: {order['temple']}\n"
             card += f"Конечная точка: Крематорий\n"
 
-        card += f"Телефон: {order.get('phone', 'Не указано')}\n"
+    card += f"Телефон: {order.get('phone', 'Не указано')}\n"
 
     return card
 
@@ -346,8 +334,7 @@ def build_crematorium_card(order: Dict[str, Any]) -> str:
     else:
         extras_str = "Нет"
 
-    card = "КРЕМАТОРИЙ\n"
-    card += f"{'_' * 30}\n"
+    card = "🔥\n\n"
     card += f"ФИО: {order.get('deceased', 'Не указано')}\n"
     card += f"Дата кремации: {order.get('event_date', 'Не указано')}\n"
     card += f"Урна: {urn_str}\n"

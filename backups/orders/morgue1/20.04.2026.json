@@ -1,0 +1,20 @@
+[
+  {
+    "order_date": "2026-04-20 19:15",
+    "creation_date": "20.04.2026",
+    "event_date": "23.04.2026",
+    "type": "cremation",
+    "customer_name": "СИДОРОВ",
+    "customer_phone": "89112221111",
+    "deceased": "СИДОРОВ",
+    "morgue_location": "Первомайская 13",
+    "phone": "89112221111",
+    "temple": "СИМ",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "large_body",
+      "short_farewell"
+    ]
+  }
+]

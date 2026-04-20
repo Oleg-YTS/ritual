@@ -128,8 +128,8 @@ def kb_order_select(orders: list):
 
 def kb_order_actions():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Водителю", callback_data="rsend_driver")],
-        [InlineKeyboardButton(text="Крематорий", callback_data="rsend_crem")]
+        [InlineKeyboardButton(text="🚗 водитель", callback_data="rsend_driver")],
+        [InlineKeyboardButton(text="🔥 крематорий", callback_data="rsend_crem")]
     ])
 
 def kb_report_period():

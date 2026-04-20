@@ -321,13 +321,13 @@ async def _save_and_send(message, state: FSMContext):
         await message.answer(f"⚠️ Ошибка сохранения заказа: {e}")
         return
 
-    # Читаем актуальные карточки из сохраненного order
-    driver_card = build_driver_card(order)
-    crem_card = build_crematorium_card(order) if otype == "cremation" else None
-    response = "✅ Заказ сохранён\n\n"
-    response += "━━ 📋 ВОДИТЕЛЮ ━━\n" + driver_card
-    if crem_card: response += "\n\n━━ 🔥 КРЕМАТОРИЙ ━━\n" + crem_card
-    response += "\n\nИспользуй 📋 Мои заказы для отправки"
+        # Читаем актуальные карточки из сохраненного order
+        driver_card = build_driver_card(order)
+        crem_card = build_crematorium_card(order) if otype == "cremation" else None
+        response = "✅ Заказ сохранён\n\n"
+        response += driver_card
+        if crem_card: response += "\n\n" + crem_card
+        response += "\n\nИспользуй 📋 Мои заказы для отправки"
     
     await message.answer(response)
     await state.clear()
@@ -364,26 +364,19 @@ async def show_my_orders(message: types.Message, state: FSMContext):
         await message.answer(f"📅 Заказов за сегодня ({today_str}) не найдено.")
         return
 
-    # Формируем текст с информацией о заказах
-    text = f"📋 ЗАКАЗЫ ЗА СЕГОДНЯ ({today_str}):\n"
+    # Формируем компактный список заказов
+    text = f"📋 Мои заказы ({len(orders_to_show)})\n"
     text += "_" * 35 + "\n"
     
     for i, order in enumerate(orders_to_show, 1):
         icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-        order_date = order.get("order_date", "?")[:16]  # Убираем секунды
         event_date = order.get("event_date", "?")
         deceased = order.get("deceased", "Без имени")
-        morgue = order.get("_morgue_name", MORGUE_NAMES[mid])
         
-        text += f"\n{i}. {icon} {deceased}\n"
-        text += f"   📅 Дата заказа: {order_date}\n"
-        text += f"   📆 Дата события: {event_date}\n"
-        text += f"   🏥 Морг: {morgue}\n"
+        text += f"\n{i}. {icon} {deceased} {event_date}"
 
-    text += "\n" + "_" * 35 + f"\nВсего: {len(orders_to_show)} заказов"
-    
     await state.update_data(orders_list=orders_to_show)
-    await message.answer(text)
+    await message.answer(text, reply_markup=kb_order_select(orders_to_show))
 
 # Хендлер выбора заказа из списка
 @router.callback_query(F.data.startswith("rorder_"))
@@ -395,8 +388,18 @@ async def select_order_from_list(cb: types.CallbackQuery, state: FSMContext):
     if 0 <= idx < len(orders_list):
         order = orders_list[idx]
         await state.update_data(current_order=order)
-        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-        await cb.message.edit_text(f"{icon} {order.get('deceased', 'Без имени')} ({order.get('_morgue_name')})", reply_markup=kb_order_actions())
+        
+        # Для похорон сразу отправляем карточку водителю
+        if order.get("type") == "funeral":
+            driver_card = build_driver_card(order)
+            response = driver_card
+            await cb.message.edit_text(response)
+        else:
+            # Для кремации отправляем обе карточки и кнопки выбора
+            driver_card = build_driver_card(order)
+            crem_card = build_crematorium_card(order)
+            response = driver_card + "\n\n" + crem_card
+            await cb.message.edit_text(response, reply_markup=kb_order_actions())
     await cb.answer()
 
 # Хендлер кнопки "Водителю"
@@ -405,10 +408,12 @@ async def send_driver(cb: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     order = data.get("current_order")
     if order:
-        await cb.message.answer(build_driver_card(order))
+        driver_card = build_driver_card(order)
+        response = driver_card + "\n\n✅ Карточка отправлена водителю"
+        await cb.message.edit_text(response)
     else:
         # Если в стейте нет (например, был 1 заказ)
-        await cb.message.answer("⚠️ Ошибка контекста заказа. Попробуй из списка.")
+        await cb.message.edit_text("⚠️ Ошибка контекста заказа. Попробуй из списка.")
     await cb.answer()
 
 # Хендлер кнопки "Крематорий"
@@ -418,9 +423,11 @@ async def send_crem(cb: types.CallbackQuery, state: FSMContext):
     order = data.get("current_order")
     if order:
         if order.get("type") == "cremation":
-            await cb.message.answer(build_crematorium_card(order))
+            crem_card = build_crematorium_card(order)
+            response = crem_card + "\n\n✅ Карточка отправлена крематорию"
+            await cb.message.edit_text(response)
         else:
-            await cb.message.answer("⚠️ Это похороны.")
+            await cb.message.edit_text("⚠️ Это похороны.")
     else:
-        await cb.message.answer("⚠️ Ошибка контекста.")
+        await cb.message.edit_text("⚠️ Ошибка контекста.")
     await cb.answer()
