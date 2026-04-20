@@ -57,6 +57,8 @@ class RitualFSM(StatesGroup):
     urn_color = State()
     extras = State()
     extras_temple = State()
+    select_orders_date = State()  # Новое состояние для ввода даты
+    select_casket = State()      # Новое состояние для ввода размера гроба
 
 # ============================================================
 # ВСПОМОГАТЕЛЬНЫЕ
@@ -280,7 +282,7 @@ async def _save_and_send(message, state: FSMContext):
     loc_map = {"morgue1": "Первомайская 13", "morgue2": "Мира 11"}
     morgue_name = loc_map.get(loc, loc)
     
-    now = datetime.now()
+    now = datetime.now() + timedelta(hours=3)  # ✅ ИСПРАВЛЕНИЕ: Приводим время к московскому часовому поясу
     
     order = {
         "order_date": now.strftime("%Y-%m-%d %H:%M"), # Лог
@@ -290,7 +292,8 @@ async def _save_and_send(message, state: FSMContext):
         "customer_name": data["customer_name"], "customer_phone": data["customer_phone"],
         "deceased": data["deceased_name"], "morgue_location": morgue_name,
         "phone": data["customer_phone"], "temple": data.get("temple", ""),
-        "cemetery": data.get("cemetery", "")
+        "cemetery": data.get("cemetery", ""),
+        "casket": data.get("casket", "")  # ✅ ДОБАВЛЯЕМ ПОЛЕ ГРОБА
     }
     if otype == "cremation":
         urn = data.get("urn_type", "")
@@ -362,23 +365,6 @@ async def _save_and_send(message, state: FSMContext):
     role = user["role"] if user else "admin"
     await message.answer("Далее:", reply_markup=kb_main_menu(role))
 
-# Добавляем новое состояние для выбора даты
-class RitualFSM(StatesGroup):
-    select_morgue = State()
-    other_location = State()
-    event_date = State()
-    customer_name = State()
-    customer_phone = State()
-    deceased_name = State()
-    temple = State()
-    cemetery = State()
-    urn_type = State()
-    urn_color = State()
-    extras = State()
-    extras_temple = State()
-    select_orders_date = State()  # Новое состояние для ввода даты
-    select_casket = State()      # Новое состояние для ввода размера гроба
-
 # Клавиатура для выбора даты
 def kb_orders_date():
     builder = InlineKeyboardBuilder()
@@ -411,6 +397,11 @@ async def handle_order_date(cb: types.CallbackQuery, state: FSMContext):
     else:
         yesterday = now - timedelta(days=1)
         target_date = yesterday.strftime("%d.%m.%Y")
+        date_label = "вчера"
+        
+    # Добавляем корректировку на случай, если время еще не перешло на следующий день (00:00-02:00)
+    if now.hour < 3:  # Если сейчас 00:00-02:00, то "сегодня" — это ещё вчерашний день по местному времени
+        target_date = (now - timedelta(days=1)).strftime("%d.%m.%Y")
         date_label = "вчера"
     
     # Собираем заказы
