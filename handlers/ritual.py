@@ -16,6 +16,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
+from database.order_storage import save_order as save_order_to_file, get_orders_by_date, get_all_orders_for_morgue
 from database.crm import add_order as crm_add_order
 from utils.reports import build_driver_card, build_crematorium_card
 from keyboards.menus import (
@@ -56,8 +57,6 @@ class RitualFSM(StatesGroup):
     urn_color = State()
     extras = State()
     extras_temple = State()
-    select_orders_date = State()  # Новое состояние для ввода даты
-    select_casket = State()      # Новое состояние для ввода размера гроба
 
 # ============================================================
 # ВСПОМОГАТЕЛЬНЫЕ
@@ -196,22 +195,6 @@ async def input_cemetery(message: types.Message, state: FSMContext):
     cemetery = message.text.strip().upper()
     if not cemetery: await message.answer("⚠️ Введи кладбище:"); return
     await state.update_data(cemetery=cemetery)
-    
-    # Всегда запрашиваем размер гроба для похорон
-    data = await state.get_data()
-    if data["type"] == "funeral":
-        await message.answer("🪦 Гроб (размер):")
-        await state.set_state(RitualFSM.select_casket)
-    else:
-        await _save_and_send(message, state)
-
-@router.message(RitualFSM.select_casket)
-async def input_casket(message: types.Message, state: FSMContext):
-    casket = message.text.strip()
-    if not casket:
-        await message.answer("🪦 Гроб (размер):")
-        return
-    await state.update_data(casket=casket)
     await _save_and_send(message, state)
 
 # Кремация
@@ -281,7 +264,7 @@ async def _save_and_send(message, state: FSMContext):
     loc_map = {"morgue1": "Первомайская 13", "morgue2": "Мира 11"}
     morgue_name = loc_map.get(loc, loc)
     
-    now = datetime.now() + timedelta(hours=3)  # ✅ ИСПРАВЛЕНИЕ: Приводим время к московскому часовому поясу
+    now = datetime.now()
     
     order = {
         "order_date": now.strftime("%Y-%m-%d %H:%M"), # Лог
@@ -291,8 +274,7 @@ async def _save_and_send(message, state: FSMContext):
         "customer_name": data["customer_name"], "customer_phone": data["customer_phone"],
         "deceased": data["deceased_name"], "morgue_location": morgue_name,
         "phone": data["customer_phone"], "temple": data.get("temple", ""),
-        "cemetery": data.get("cemetery", ""),
-        "casket": data.get("casket", "")  # ✅ ДОБАВЛЯЕМ ПОЛЕ ГРОБА
+        "cemetery": data.get("cemetery", "")
     }
     if otype == "cremation":
         urn = data.get("urn_type", "")
@@ -320,13 +302,13 @@ async def _save_and_send(message, state: FSMContext):
     response += "\n\nИспользуй 📋 Мои заказы для отправки"
 
     try:
-        # Сохраняем заказ в GitHub — единственный источник правды
+        # Сохраняем заказ ТОЛЬКО в файл по дате мероприятия (архив)
         if actual_morgue:
-            db = MORGUE_DBS[actual_morgue]
-            db.add_global_order(order)
-            logger.info(f"Заказ сохранён в GitHub: {actual_morgue}")
+            save_order_to_file(actual_morgue, order)
+            logger.info(f"Заказ сохранён в архив: {actual_morgue}")
 
-            # Добавляем заказ в активную смену (для отображения)
+            # Добавляем заказ в смену как ОРДЕР (не тело!) - только для отображения
+            db = MORGUE_DBS[actual_morgue]
             shift = db.get_active_shift()
             if shift:
                 if "orders" not in shift:
@@ -334,13 +316,14 @@ async def _save_and_send(message, state: FSMContext):
                 shift["orders"].append(order)
                 db.update_shift(shift["shift_id"], shift)
         else:
-            # Админ без привязки — сохраняем в оба морга
+            # Админ без привязки — сохраняем в ОБА файла
+            save_order_to_file("morgue1", order)
+            save_order_to_file("morgue2", order)
+            logger.info(f"Заказ сохранен в оба архива (Admin/Other location)")
+
+            # Добавляем заказ в обе смены как ОРДЕР
             for mid in ["morgue1", "morgue2"]:
                 db = MORGUE_DBS[mid]
-                db.add_global_order(order)
-                logger.info(f"Заказ сохранён в GitHub: {mid}")
-
-                # Добавляем в активную смену
                 shift = db.get_active_shift()
                 if shift:
                     if "orders" not in shift:
@@ -362,6 +345,22 @@ async def _save_and_send(message, state: FSMContext):
     user = get_user(message.from_user.id)
     role = user["role"] if user else "admin"
     await message.answer("Далее:", reply_markup=kb_main_menu(role))
+
+# Добавляем новое состояние для выбора даты
+class RitualFSM(StatesGroup):
+    select_morgue = State()
+    other_location = State()
+    event_date = State()
+    customer_name = State()
+    customer_phone = State()
+    deceased_name = State()
+    temple = State()
+    cemetery = State()
+    urn_type = State()
+    urn_color = State()
+    extras = State()
+    extras_temple = State()
+    select_orders_date = State()  # Новое состояние для ввода даты
 
 # Клавиатура для выбора даты
 def kb_orders_date():
