@@ -92,6 +92,19 @@
       "phone": "99988899",
       "temple": "12",
       "cemetery": "12"
+    },
+    {
+      "order_date": "2026-04-20 17:17",
+      "creation_date": "20.04.2026",
+      "event_date": "22.04.2026",
+      "type": "funeral",
+      "customer_name": "СИСЬКА",
+      "customer_phone": "2221112211",
+      "deceased": "ПИСЬКА",
+      "morgue_location": "Первомайская 13",
+      "phone": "2221112211",
+      "temple": "СИСЬКА",
+      "cemetery": "ПИСТЬКА"
     }
   ]
 }
