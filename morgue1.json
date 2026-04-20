@@ -79,6 +79,19 @@
         "polished_coffin",
         "hall_blessing"
       ]
+    },
+    {
+      "order_date": "2026-04-20 17:07",
+      "creation_date": "20.04.2026",
+      "event_date": "22.04.2026",
+      "type": "funeral",
+      "customer_name": "ПИСЬКА",
+      "customer_phone": "99988899",
+      "deceased": "СИСЬКА",
+      "morgue_location": "Первомайская 13",
+      "phone": "99988899",
+      "temple": "12",
+      "cemetery": "12"
     }
   ]
 }
