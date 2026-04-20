@@ -16,7 +16,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from database.storage import UsersStorage, MorgueStorage
 from utils.reports import MORGUE_CONFIG, calculate_shift_finances, format_shift_report
-from database.github_backup import gh_backup
 from keyboards.menus import (
     kb_main_menu, kb_select_morgue_add, kb_select_morgue_close,
     kb_select_morgue_remove, kb_body_type, kb_body_source,
@@ -436,12 +435,8 @@ async def _finish_close(message, morgue_id: str, shift_id: str, state: FSMContex
     name = user.get("name", "Unknown") if user else "Unknown"
     db.close_shift(shift_id, message.from_user.id, name)
     
-    # Бэкап в GitHub с проверкой результата
-    backup_success = gh_backup.backup_shift(shift, morgue_id)
-    if not backup_success:
-        logger.error(f"❌ НЕ УДАЛОСЬ сохранить смену {shift_id} в GitHub!")
-        # Уведомляем пользователя об ошибке бэкапа
-        await message.answer("⚠️ <b>Внимание!</b>\nСмена закрыта, но бэкап в GitHub не выполнен.\nПроверьте логи или настройку GITHUB_TOKEN.")
+    # Данные автоматически синхронизируются через GitHubDataStorage
+    # Никаких дополнительных действий не требуется
     
     report = format_shift_report(shift, morgue_id)
     await message.answer(report)

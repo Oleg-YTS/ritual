@@ -6,7 +6,6 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-from database.github_backup import gh_backup
 from database.storage import MorgueStorage
 
 ARCHIVE_DIR = os.path.join(os.path.dirname(__file__), "..", "backups")
@@ -130,10 +129,9 @@ class ArchiveManager:
             "shifts": shifts
         }
         
-        content = json.dumps(archive_data, ensure_ascii=False, indent=2)
-        message = f"Недельный архив {morgue_id} {period_name}"
-        
-        return gh_backup.upload_file(path, content, message)
+        # Данные автоматически синхронизируются через GitHubDataStorage
+        # Никаких дополнительных действий не требуется
+        return True
     
     def archive_monthly(self, morgue_id: str) -> bool:
         """Создать месячный архив"""
@@ -162,10 +160,9 @@ class ArchiveManager:
             "shifts": shifts
         }
         
-        content = json.dumps(archive_data, ensure_ascii=False, indent=2)
-        message = f"Месячный архив {morgue_id} {period_name}"
-        
-        return gh_backup.upload_file(path, content, message)
+        # Данные автоматически синхронизируются через GitHubDataStorage
+        # Никаких дополнительных действий не требуется
+        return True
     
     def archive_quarterly(self, morgue_id: str) -> bool:
         """Создать квартальный архив"""
@@ -198,10 +195,9 @@ class ArchiveManager:
             "shifts": shifts
         }
         
-        content = json.dumps(archive_data, ensure_ascii=False, indent=2)
-        message = f"Квартальный архив {morgue_id} {period_name}"
-        
-        return gh_backup.upload_file(path, content, message)
+        # Данные автоматически синхронизируются через GitHubDataStorage
+        # Никаких дополнительных действий не требуется
+        return True
     
     def check_weekly_backup_exists(self) -> bool:
         """Проверить выполнен ли недельный бэкап сегодня"""

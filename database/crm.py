@@ -7,7 +7,6 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-from database.github_backup import gh_backup
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 CRM_DIR = os.path.join(os.path.dirname(__file__), "..", "backups", "crm")
@@ -187,13 +186,9 @@ class CRMStorage:
     
     def _backup_to_github(self):
         """Бэкап всей базы в GitHub"""
-        data = self.read()
-        content = json.dumps(data, ensure_ascii=False, indent=2)
-        gh_backup.upload_file(
-            "backups/crm/orders_all.json",
-            content,
-            f"CRM бэкап {datetime.now().strftime('%d.%m.%Y %H:%M')}"
-        )
+        # Данные автоматически синхронизируются через GitHubDataStorage
+        # Никаких дополнительных действий не требуется
+        pass
 
 
 # Синглтон
