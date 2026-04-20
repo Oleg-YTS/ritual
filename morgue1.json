@@ -45,6 +45,24 @@
         "large_body",
         "short_farewell"
       ]
+    },
+    {
+      "order_date": "2026-04-20 17:03",
+      "creation_date": "20.04.2026",
+      "event_date": "22.04.2026",
+      "type": "cremation",
+      "customer_name": "ВЯЛЫЙ",
+      "customer_phone": "89112220099",
+      "deceased": "КИСЛЫЙ",
+      "morgue_location": "Первомайская 13",
+      "phone": "89112220099",
+      "temple": "Зал отпевания",
+      "cemetery": "",
+      "urn": "Вечная память",
+      "extras": [
+        "polished_coffin",
+        "hall_blessing"
+      ]
     }
   ]
 }
