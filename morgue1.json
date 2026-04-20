@@ -85,7 +85,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-04-20 21:44",
+          "creation_date": "20.04.2026",
+          "event_date": "23.04.2026",
+          "type": "funeral",
+          "customer_name": "СЯСЬКИН",
+          "customer_phone": "112211",
+          "deceased": "МАСЯСЬКИН",
+          "morgue_location": "Первомайская 13",
+          "phone": "112211",
+          "temple": "СЕМАХА",
+          "cemetery": "1-Е"
+        }
+      ],
       "closed": false
     }
   ]
