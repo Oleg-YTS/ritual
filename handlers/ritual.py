@@ -87,16 +87,7 @@ def check_perm(tid, action):
     }
     return action in perms.get(role, [])
 
-def save_order_to_shift(order: dict, morgue_id: str) -> bool:
-    """Сохраняет заказ в смену морга И в файл по дате"""
-    # 1. Сохраняем в глобальный список морга (для оперативного доступа)
-    db = MORGUE_DBS.get(morgue_id)
-    saved_to_db = db.add_global_order(order) if db else False
-    
-    # 2. Сохраняем в файл по дате мероприятия (для архива и статистики)
-    saved_to_file = save_order_to_file(morgue_id, order)
-    
-    return saved_to_db or saved_to_file
+# Функция save_order_to_shift удалена — она не нужна
 
 # ============================================================
 # ХЕНДЛЕРЫ (Прямой запуск кнопок)
@@ -301,7 +292,7 @@ async def _save_and_send(message, state: FSMContext):
         else:
             # Админ без привязки — сохраняем в ОБА морга
             actual_morgue = None
-    
+
     # Читаем актуальные карточки из сохраненного order
     driver_card = build_driver_card(order)
     crem_card = build_crematorium_card(order) if otype == "cremation" else None
@@ -311,19 +302,39 @@ async def _save_and_send(message, state: FSMContext):
     response += "\n\nИспользуй 📋 Мои заказы для отправки"
 
     try:
+        # Сохраняем заказ ТОЛЬКО в файл по дате мероприятия (архив)
         if actual_morgue:
-            save_order_to_shift(order, actual_morgue)
-            logger.info(f"Заказ сохранён в {actual_morgue}")
+            save_order_to_file(actual_morgue, order)
+            logger.info(f"Заказ сохранён в архив: {actual_morgue}")
+
+            # Добавляем заказ в смену как ОРДЕР (не тело!) - только для отображения
+            db = MORGUE_DBS[actual_morgue]
+            shift = db.get_active_shift()
+            if shift:
+                if "orders" not in shift:
+                    shift["orders"] = []
+                shift["orders"].append(order)
+                db.update_shift(shift["shift_id"], shift)
         else:
-            # Админ без привязки к моргу — сохраняем в ОБА файла
-            save_order_to_shift(order, "morgue1")
-            save_order_to_shift(order, "morgue2")
-            logger.info(f"Заказ сохранен в оба морга (Admin/Other location)")
-        
+            # Админ без привязки — сохраняем в ОБА файла
+            save_order_to_file("morgue1", order)
+            save_order_to_file("morgue2", order)
+            logger.info(f"Заказ сохранен в оба архива (Admin/Other location)")
+
+            # Добавляем заказ в обе смены как ОРДЕР
+            for mid in ["morgue1", "morgue2"]:
+                db = MORGUE_DBS[mid]
+                shift = db.get_active_shift()
+                if shift:
+                    if "orders" not in shift:
+                        shift["orders"] = []
+                    shift["orders"].append(order)
+                    db.update_shift(shift["shift_id"], shift)
+
         # Сохраняем в CRM базу для обзвона и памятников
         crm_add_order(order)
         logger.info(f"Заказ добавлен в CRM: {order.get('deceased')}")
-        
+
     except Exception as e:
         logger.error(f"ОШИБКА СОХРАНЕНИЯ ЗАКАЗА: {e}")
         await message.answer(f"⚠️ Ошибка сохранения заказа: {e}")
