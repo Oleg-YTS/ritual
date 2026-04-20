@@ -1,0 +1,14 @@
+{
+  "shifts": [
+    {
+      "shift_id": "shift_20260420_191149",
+      "start_time": "2026-04-20T19:11:49.356106",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [],
+      "orders": [],
+      "closed": false
+    }
+  ],
+  "orders": []
+}
