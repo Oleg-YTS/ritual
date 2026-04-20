@@ -195,6 +195,22 @@ async def input_cemetery(message: types.Message, state: FSMContext):
     cemetery = message.text.strip().upper()
     if not cemetery: await message.answer("⚠️ Введи кладбище:"); return
     await state.update_data(cemetery=cemetery)
+    
+    # Если похороны — запрашиваем размер гроба
+    data = await state.get_data()
+    if data["type"] == "funeral":
+        await message.answer("🪦 Гроб (размер):")
+        await state.set_state(RitualFSM.select_casket)
+    else:
+        await _save_and_send(message, state)
+
+@router.message(RitualFSM.select_casket)
+async def input_casket(message: types.Message, state: FSMContext):
+    casket = message.text.strip()
+    if not casket:
+        await message.answer("🪦 Гроб (размер):")
+        return
+    await state.update_data(casket=casket)
     await _save_and_send(message, state)
 
 # Кремация
@@ -361,6 +377,7 @@ class RitualFSM(StatesGroup):
     extras = State()
     extras_temple = State()
     select_orders_date = State()  # Новое состояние для ввода даты
+    select_casket = State()      # Новое состояние для ввода размера гроба
 
 # Клавиатура для выбора даты
 def kb_orders_date():

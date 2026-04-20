@@ -285,6 +285,9 @@ def build_driver_card(order: Dict[str, Any]) -> str:
     card += f"Морг: {order.get('morgue_location', 'Не указано')}\n"
 
     if order_type == "funeral":
+        casket = order.get("casket", "")
+        if casket:
+            card += f"Гроб (размер): {casket}\n"
         if order.get("temple"):
             card += f"Отпевание: {order['temple']}\n"
         if order.get("cemetery"):
