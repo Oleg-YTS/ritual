@@ -105,6 +105,25 @@
       "phone": "2221112211",
       "temple": "СИСЬКА",
       "cemetery": "ПИСТЬКА"
+    },
+    {
+      "order_date": "2026-04-20 17:18",
+      "creation_date": "20.04.2026",
+      "event_date": "22.04.2026",
+      "type": "cremation",
+      "customer_name": "ПИПИСЬКА",
+      "customer_phone": "2221122211",
+      "deceased": "САСИСЬКА",
+      "morgue_location": "Первомайская 13",
+      "phone": "2221122211",
+      "temple": "Зал отпевания",
+      "cemetery": "",
+      "urn": "Вечная память",
+      "extras": [
+        "hall_blessing",
+        "polished_coffin",
+        "short_farewell"
+      ]
     }
   ]
 }
