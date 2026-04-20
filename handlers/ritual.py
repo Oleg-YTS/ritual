@@ -346,48 +346,135 @@ async def _save_and_send(message, state: FSMContext):
     role = user["role"] if user else "admin"
     await message.answer("Далее:", reply_markup=kb_main_menu(role))
 
-# Мои заказы (Чтение из файлов по ДАТЕ ОФОРМЛЕНИЯ - текущая дата)
+# Добавляем новое состояние для выбора даты
+class RitualFSM(StatesGroup):
+    select_morgue = State()
+    other_location = State()
+    event_date = State()
+    customer_name = State()
+    customer_phone = State()
+    deceased_name = State()
+    temple = State()
+    cemetery = State()
+    urn_type = State()
+    urn_color = State()
+    extras = State()
+    extras_temple = State()
+    select_orders_date = State()  # Новое состояние для ввода даты
+
+# Клавиатура для выбора даты
+def kb_orders_date():
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Сегодня", callback_data="order_today"),
+        InlineKeyboardButton(text="Вчера", callback_data="order_yesterday")
+    )
+    builder.row(
+        InlineKeyboardButton(text="Выбрать дату", callback_data="order_choose_date")
+    )
+    return builder.as_markup()
+
+# Мои заказы — начальный экран с выбором даты
 @router.message(F.text == "📋 Мои заказы")
-async def show_my_orders(message: types.Message, state: FSMContext):
+async def show_my_orders_menu(message: types.Message, state: FSMContext):
     if not check_perm(message.from_user.id, "cards"):
         await message.answer("⚠️ Нет прав."); return
+    await message.answer("📋 Выберите дату:", reply_markup=kb_orders_date())
+
+# Обработчик выбора даты
+@router.callback_query(F.data.in_(["order_today", "order_yesterday"]))
+async def handle_order_date(cb: types.CallbackQuery, state: FSMContext):
+    user_morgue = get_user_morgue(cb.from_user.id)
     
-    user_morgue = get_user_morgue(message.from_user.id)
+    # Определяем дату
+    now = datetime.now(timezone.utc) + timedelta(hours=3)
+    if cb.data == "order_today":
+        target_date = now.strftime("%d.%m.%Y")
+        date_label = "сегодня"
+    else:
+        yesterday = now - timedelta(days=1)
+        target_date = yesterday.strftime("%d.%m.%Y")
+        date_label = "вчера"
     
     # Собираем заказы
     orders_to_show = []
-    # Используем Московский часовой пояс (UTC+3)
-    moscow_time = datetime.now(timezone.utc) + timedelta(hours=3)
-    today_str = moscow_time.strftime("%d.%m.%Y")  # Формат 18.04.2026
-
-    # Если админ - смотрим оба морга, иначе только свой
     mids = ["morgue1", "morgue2"] if not user_morgue else [user_morgue]
     
     for mid in mids:
-        # Читаем ВСЕ заказы морга и фильтруем по ДАТЕ ОФОРМЛЕНИЯ
         all_orders = get_all_orders_for_morgue(mid)
         for order in all_orders:
-            if order.get("creation_date") == today_str:
+            if order.get("creation_date") == target_date:
                 order["_morgue_name"] = MORGUE_NAMES[mid]
                 orders_to_show.append(order)
 
     if not orders_to_show:
-        await message.answer(f"📅 Заказов за сегодня ({today_str}) не найдено.")
+        await cb.message.edit_text(f"📅 Заказов за {date_label} ({target_date}) не найдено.")
+        await cb.answer()
         return
 
-    # Формируем компактный список заказов
-    text = f"📋 Мои заказы ({len(orders_to_show)})\n"
+    # Формируем список
+    text = f"📋 Мои заказы ({target_date})\n"
     text += "_" * 35 + "\n"
     
     for i, order in enumerate(orders_to_show, 1):
         icon = "🔥" if order.get("type") == "cremation" else "⚰️"
-        event_date = order.get("event_date", "?")
         deceased = order.get("deceased", "Без имени")
-        
-        text += f"\n{i}. {icon} {deceased} {event_date}"
+        text += f"\n{i}. {icon} {deceased}"
+
+    await state.update_data(orders_list=orders_to_show)
+    await cb.message.edit_text(text, reply_markup=kb_order_select(orders_to_show))
+    await cb.answer()
+
+# Выбор даты вручную
+@router.callback_query(F.data == "order_choose_date")
+async def choose_date_manually(cb: types.CallbackQuery, state: FSMContext):
+    await cb.message.edit_text("📅 Введите дату в формате ДД.ММ.ГГГГ\nПример: 20.04.2026")
+    await state.set_state(RitualFSM.select_orders_date)
+    await cb.answer()
+
+# Обработка ввода даты
+@router.message(RitualFSM.select_orders_date)
+async def show_orders_by_date(message: types.Message, state: FSMContext):
+    user_morgue = get_user_morgue(message.from_user.id)
+    
+    # Парсим дату
+    try:
+        day, month, year = map(int, message.text.strip().split('.'))
+        if len(str(year)) != 4 or year < 2000:
+            raise ValueError
+        input_date = f"{message.text.strip():0>8}"
+    except:
+        await message.answer("⚠️ Введите дату в формате ДД.ММ.ГГГГ")
+        return
+
+    # Собираем заказы
+    orders_to_show = []
+    mids = ["morgue1", "morgue2"] if not user_morgue else [user_morgue]
+    
+    for mid in mids:
+        all_orders = get_all_orders_for_morgue(mid)
+        for order in all_orders:
+            if order.get("creation_date") == input_date:
+                order["_morgue_name"] = MORGUE_NAMES[mid]
+                orders_to_show.append(order)
+
+    if not orders_to_show:
+        await message.answer(f"📅 Заказов за {input_date} не найдено.")
+        await state.clear()
+        return
+
+    # Формируем список
+    text = f"📋 Мои заказы ({input_date})\n"
+    text += "_" * 35 + "\n"
+    
+    for i, order in enumerate(orders_to_show, 1):
+        icon = "🔥" if order.get("type") == "cremation" else "⚰️"
+        deceased = order.get("deceased", "Без имени")
+        text += f"\n{i}. {icon} {deceased}"
 
     await state.update_data(orders_list=orders_to_show)
     await message.answer(text, reply_markup=kb_order_select(orders_to_show))
+    await state.clear()
 
 # Хендлер выбора заказа из списка
 @router.callback_query(F.data.startswith("rorder_"))
