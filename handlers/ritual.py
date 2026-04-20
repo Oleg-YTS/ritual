@@ -196,7 +196,7 @@ async def input_cemetery(message: types.Message, state: FSMContext):
     if not cemetery: await message.answer("⚠️ Введи кладбище:"); return
     await state.update_data(cemetery=cemetery)
     
-    # Если похороны — запрашиваем размер гроба
+    # Всегда запрашиваем размер гроба для похорон
     data = await state.get_data()
     if data["type"] == "funeral":
         await message.answer("🪦 Гроб (размер):")

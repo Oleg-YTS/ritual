@@ -136,7 +136,7 @@ def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
 
     report += f"{'_' * 30}\n"
     report += f"💰 Доход: {finances['income']}₽\n"
-    report += f"🧑‍⚕️ Санитары: {finances['sanitary_expense']}₽\n"
+    report += f"🧑 Санитары: {finances['sanitary_expense']}₽\n"
 
     if finances['transport_expense'] > 0:
         report += f"🚚 Перевозка: {finances['transport_expense']}₽\n"
@@ -154,11 +154,6 @@ def format_shift_report(shift: Dict[str, Any], morgue_id: str) -> str:
         for body in finances['removed_list']:
             reason = body.get("removed_reason", "Не указано")
             report += f"• {body['surname']} → {reason}\n"
-    
-    # Раздел заказов (актуальные на текущую дату из файлов)
-    orders_section = format_orders_section(morgue_id)
-    report += f"\n{'_' * 30}\n"
-    report += orders_section
     
     return report
 
