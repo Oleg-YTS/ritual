@@ -15,8 +15,7 @@ from aiogram.types import InlineKeyboardButton, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from database.storage import UsersStorage, MorgueStorage
-from database.order_storage import save_order as save_order_to_file, get_orders_by_date, get_all_orders_for_morgue
+from database.storage import UsersStorage, MorgueStorage, get_all_orders_for_morgue
 from database.crm import add_order as crm_add_order
 from utils.reports import build_driver_card, build_crematorium_card
 from keyboards.menus import (
@@ -321,13 +320,13 @@ async def _save_and_send(message, state: FSMContext):
     response += "\n\nИспользуй 📋 Мои заказы для отправки"
 
     try:
-        # Сохраняем заказ ТОЛЬКО в файл по дате мероприятия (архив)
+        # Сохраняем заказ в GitHub — единственный источник правды
         if actual_morgue:
-            save_order_to_file(actual_morgue, order)
-            logger.info(f"Заказ сохранён в архив: {actual_morgue}")
-
-            # Добавляем заказ в смену как ОРДЕР (не тело!) - только для отображения
             db = MORGUE_DBS[actual_morgue]
+            db.add_global_order(order)
+            logger.info(f"Заказ сохранён в GitHub: {actual_morgue}")
+
+            # Добавляем заказ в активную смену (для отображения)
             shift = db.get_active_shift()
             if shift:
                 if "orders" not in shift:
@@ -335,14 +334,13 @@ async def _save_and_send(message, state: FSMContext):
                 shift["orders"].append(order)
                 db.update_shift(shift["shift_id"], shift)
         else:
-            # Админ без привязки — сохраняем в ОБА файла
-            save_order_to_file("morgue1", order)
-            save_order_to_file("morgue2", order)
-            logger.info(f"Заказ сохранен в оба архива (Admin/Other location)")
-
-            # Добавляем заказ в обе смены как ОРДЕР
+            # Админ без привязки — сохраняем в оба морга
             for mid in ["morgue1", "morgue2"]:
                 db = MORGUE_DBS[mid]
+                db.add_global_order(order)
+                logger.info(f"Заказ сохранён в GitHub: {mid}")
+
+                # Добавляем в активную смену
                 shift = db.get_active_shift()
                 if shift:
                     if "orders" not in shift:
