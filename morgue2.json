@@ -34,7 +34,10 @@
           ]
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-04-20T19:10:40.000144",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ]
 }
