@@ -18,7 +18,7 @@
           "surname": "ТЕСТ 22",
           "type": "nstd",
           "source": "amb",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
