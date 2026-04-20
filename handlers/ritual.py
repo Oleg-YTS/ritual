@@ -15,7 +15,7 @@ from aiogram.types import InlineKeyboardButton, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from database.storage import UsersStorage, MorgueStorage, get_all_orders_for_morgue
+from database.storage import UsersStorage, MorgueStorage
 from database.crm import add_order as crm_add_order
 from utils.reports import build_driver_card, build_crematorium_card
 from keyboards.menus import (
