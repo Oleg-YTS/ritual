@@ -53,5 +53,23 @@
     "phone": "112211",
     "temple": "12",
     "cemetery": "12"
+  },
+  {
+    "order_date": "2026-04-21 21:14",
+    "creation_date": "21.04.2026",
+    "event_date": "25.04.2026",
+    "type": "cremation",
+    "customer_name": "ТЕСТОВАЯ КРЕМА",
+    "customer_phone": "221122",
+    "deceased": "ТЕСТОВАЯ КРЕМАНКА",
+    "morgue_location": "Мира 11",
+    "phone": "221122",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Пластик (Синий)",
+    "extras": [
+      "hall",
+      "large_body"
+    ]
   }
 ]
