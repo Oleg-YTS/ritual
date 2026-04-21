@@ -5,7 +5,16 @@
       "start_time": "2026-04-21T05:45:45.319172",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "ТЕСТОВЫЙ 1",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
