@@ -23,7 +23,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-04-21 05:46",
+          "creation_date": "21.04.2026",
+          "event_date": "25.04.2026",
+          "type": "funeral",
+          "customer_name": "ТЕСТОВЫЙ",
+          "customer_phone": "112211",
+          "deceased": "ТЕСТОВЫЙ ТРУП",
+          "morgue_location": "Мира 11",
+          "phone": "112211",
+          "temple": "СЕМАХА",
+          "cemetery": "1-Е"
+        }
+      ],
       "closed": false
     }
   ],
