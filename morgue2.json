@@ -10,7 +10,7 @@
           "surname": "ТЕСТОВЫЙ 1",
           "type": "std",
           "source": "stat",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
