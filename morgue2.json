@@ -36,6 +36,24 @@
           "phone": "112211",
           "temple": "СЕМАХА",
           "cemetery": "1-Е"
+        },
+        {
+          "order_date": "2026-04-21 05:47",
+          "creation_date": "21.04.2026",
+          "event_date": "25.04.2026",
+          "type": "cremation",
+          "customer_name": "КРЕМАТОРИЙ",
+          "customer_phone": "221122",
+          "deceased": "КРЕМАТОРИЙ ТРУП",
+          "morgue_location": "Мира 11",
+          "phone": "221122",
+          "temple": "СЕМАХА",
+          "cemetery": "",
+          "urn": "Пластик (Белый)",
+          "extras": [
+            "large_body",
+            "short_farewell"
+          ]
         }
       ],
       "closed": false
