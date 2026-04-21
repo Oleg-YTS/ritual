@@ -40,5 +40,18 @@
       "rating": null,
       "comment": null
     }
+  },
+  {
+    "order_date": "2026-04-21 21:12",
+    "creation_date": "21.04.2026",
+    "event_date": "25.04.2026",
+    "type": "funeral",
+    "customer_name": "ТЕСТОВАЯ ПИСЬКА",
+    "customer_phone": "112211",
+    "deceased": "ТЕСТОВАЯ СИСЬКИ",
+    "morgue_location": "Мира 11",
+    "phone": "112211",
+    "temple": "12",
+    "cemetery": "12"
   }
 ]
