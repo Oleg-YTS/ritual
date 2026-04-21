@@ -50,3 +50,15 @@ def get_all_orders_for_morgue(morgue_id: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Ошибка чтения заказов из GitHub: {e}")
         return []
+
+def get_orders_by_date(morgue_id: str, date: str) -> List[Dict[str, Any]]:
+    """
+    Получает заказы для морга за указанную дату
+    date: строка в формате ДД.ММ.ГГГГ
+    """
+    try:
+        all_orders = get_all_orders_for_morgue(morgue_id)
+        return [order for order in all_orders if order.get("creation_date") == date]
+    except Exception as e:
+        logger.error(f"Ошибка фильтрации заказов по дате: {e}")
+        return []
