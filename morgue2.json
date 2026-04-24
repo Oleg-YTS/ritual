@@ -95,7 +95,16 @@
       "start_time": "2026-04-24T07:37:07.852687",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "ПЕТРОВА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
