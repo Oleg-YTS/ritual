@@ -88,5 +88,22 @@
     "extras": [
       "urgent"
     ]
+  },
+  {
+    "order_date": "2026-04-24 07:42",
+    "creation_date": "24.04.2026",
+    "event_date": "24.04.2026",
+    "type": "cremation",
+    "customer_name": "ЕЖОВ И В",
+    "customer_phone": "89156985512",
+    "deceased": "ЕЖОВ ВЯЧЕСЛАВ АНАТОЛЬЕВИЧ",
+    "morgue_location": "Мира 11",
+    "phone": "89156985512",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall_blessing"
+    ]
   }
 ]
