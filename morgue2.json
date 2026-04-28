@@ -206,7 +206,16 @@
       "start_time": "2026-04-28T08:43:54.901889",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "ЮРАШЕВА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
