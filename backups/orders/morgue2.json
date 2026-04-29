@@ -105,5 +105,22 @@
     "extras": [
       "hall_blessing"
     ]
+  },
+  {
+    "order_date": "2026-04-29 11:16",
+    "creation_date": "29.04.2026",
+    "event_date": "30.04.2026",
+    "type": "cremation",
+    "customer_name": "АНДРЕЕВА ЕЛЕНА",
+    "customer_phone": "89509188924",
+    "deceased": "ЖУКОВА",
+    "morgue_location": "Мира 11",
+    "phone": "89509188924",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall_blessing"
+    ]
   }
 ]
