@@ -309,7 +309,16 @@
       "start_time": "2026-05-02T07:46:26.312624",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "БЕРЕЗОВСКИЙ",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
