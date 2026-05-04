@@ -420,7 +420,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-05-04 07:10",
+          "creation_date": "04.05.2026",
+          "event_date": "06.05.2026",
+          "type": "funeral",
+          "customer_name": "ФЕДУЛОВА ЕВГЕНИЯ АЛЕКСАНДРОВНА",
+          "customer_phone": "89520182852",
+          "deceased": "ФЕДУЛОВ П А",
+          "morgue_location": "Мира 11",
+          "phone": "89520182852",
+          "temple": "ХРУЩЕВО",
+          "cemetery": "ХРУЩЕВО(НОВ)"
+        }
+      ],
       "closed": false
     }
   ],
