@@ -435,7 +435,10 @@
           "cemetery": "ХРУЩЕВО(НОВ)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-04T09:35:42.488759",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
