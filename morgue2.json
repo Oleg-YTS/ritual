@@ -463,7 +463,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-05-05 07:18",
+          "creation_date": "05.05.2026",
+          "event_date": "07.05.2026",
+          "type": "funeral",
+          "customer_name": "ИВАНУШКИНА НАТАЛИЯ",
+          "customer_phone": "89509041586",
+          "deceased": "ИВАНУШКИНА А И",
+          "morgue_location": "Мира 11",
+          "phone": "89509041586",
+          "temple": "ЗАОКСКИЙ",
+          "cemetery": "ЗАОКСКИЙ(АЛЕКСАНДРОВКА)"
+        }
+      ],
       "closed": false
     }
   ],
