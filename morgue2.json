@@ -547,7 +547,10 @@
           "cemetery": "4-Е(24 УЧ)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-09T08:34:41.741601",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
