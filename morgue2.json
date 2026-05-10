@@ -614,7 +614,10 @@
           "cemetery": "3-Е, УЧ. 24-А"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-10T07:40:09.264490",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
