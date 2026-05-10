@@ -161,5 +161,18 @@
     "phone": "89531936691",
     "temple": "РЕВОЛЮЦИИ 6Б",
     "cemetery": "4-Е(24 УЧ)"
+  },
+  {
+    "order_date": "2026-05-10 06:49",
+    "creation_date": "10.05.2026",
+    "event_date": "11.05.2026",
+    "type": "funeral",
+    "customer_name": "МИРОНОВ НИКОЛАЙ",
+    "customer_phone": "89207555011",
+    "deceased": "ЛАПШИНА А А",
+    "morgue_location": "Мира 11",
+    "phone": "89207555011",
+    "temple": "АРСЕНАЛЬНАЯ 5А",
+    "cemetery": "3-Е, УЧ. 24-А"
   }
 ]
