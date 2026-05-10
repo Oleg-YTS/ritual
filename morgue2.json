@@ -565,6 +565,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ГОНАЛА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
