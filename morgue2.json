@@ -669,7 +669,7 @@
           "surname": "АХЛЫНИНА",
           "type": "std",
           "source": "amb",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         }
