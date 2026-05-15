@@ -200,5 +200,18 @@
     "phone": "89684771363",
     "temple": "ПРЯМОЙ",
     "cemetery": "4-Е УЧ. 25"
+  },
+  {
+    "order_date": "2026-05-15 09:55",
+    "creation_date": "15.05.2026",
+    "event_date": "16.05.2026",
+    "type": "funeral",
+    "customer_name": "ЧЕРНИКОВ АЛЕКСЕЙ",
+    "customer_phone": "89207990885",
+    "deceased": "ЧЕРНИКОВ",
+    "morgue_location": "Мира 11",
+    "phone": "89207990885",
+    "temple": "ПЕТРА И ПАВЛА",
+    "cemetery": "СУДАКОВО, УЧ.4"
   }
 ]
