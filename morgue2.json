@@ -738,6 +738,15 @@
       "end_time": "2026-05-14T09:11:04.845279",
       "closed_by": 747600306,
       "closed_by_name": "Евсеев"
+    },
+    {
+      "shift_id": "shift_20260516_052557",
+      "start_time": "2026-05-16T05:25:57.466715",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [],
+      "orders": [],
+      "closed": false
     }
   ],
   "orders": []
