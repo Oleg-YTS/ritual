@@ -938,7 +938,10 @@
         }
       ],
       "orders": [],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-19T07:31:56.793744",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
