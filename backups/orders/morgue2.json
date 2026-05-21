@@ -239,5 +239,18 @@
     "phone": "89038404444",
     "temple": "12-ТЬ АПОСТОЛОВ",
     "cemetery": "1-Е, УЧ. 68"
+  },
+  {
+    "order_date": "2026-05-21 19:30",
+    "creation_date": "21.05.2026",
+    "event_date": "23.05.2026",
+    "type": "funeral",
+    "customer_name": "КРЕЦ КРИСТИНА",
+    "customer_phone": "89651553292",
+    "deceased": "ТАРАБРИНА А И",
+    "morgue_location": "Мира 11",
+    "phone": "89651553292",
+    "temple": "ВЕНЕВ ИОАНА ПРЕДТЕЧИ, 7-А",
+    "cemetery": "С. КАРПОВО (ВЕН. Р-ОН)"
   }
 ]
