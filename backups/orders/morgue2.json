@@ -226,5 +226,18 @@
     "phone": "89509009018",
     "temple": "ПЕТРА И ПАВЛА",
     "cemetery": "СУДАКОВО(НОВ)"
+  },
+  {
+    "order_date": "2026-05-21 19:26",
+    "creation_date": "21.05.2026",
+    "event_date": "22.05.2026",
+    "type": "funeral",
+    "customer_name": "ЛЯЛИН ОЛЕГ ВИКТОРОВИЧ",
+    "customer_phone": "89038404444",
+    "deceased": "ЛЯЛИНА С З",
+    "morgue_location": "Мира 11",
+    "phone": "89038404444",
+    "temple": "12-ТЬ АПОСТОЛОВ",
+    "cemetery": "1-Е, УЧ. 68"
   }
 ]
