@@ -213,5 +213,18 @@
     "phone": "89207990885",
     "temple": "ПЕТРА И ПАВЛА",
     "cemetery": "СУДАКОВО, УЧ.4"
+  },
+  {
+    "order_date": "2026-05-21 19:22",
+    "creation_date": "21.05.2026",
+    "event_date": "23.05.2026",
+    "type": "funeral",
+    "customer_name": "БУРКОВА ЕКАТЕРИНА",
+    "customer_phone": "89509009018",
+    "deceased": "АНИСИМОВ С П",
+    "morgue_location": "Мира 11",
+    "phone": "89509009018",
+    "temple": "ПЕТРА И ПАВЛА",
+    "cemetery": "СУДАКОВО(НОВ)"
   }
 ]
