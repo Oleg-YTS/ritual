@@ -24,5 +24,22 @@
       "rating": null,
       "comment": null
     }
+  },
+  {
+    "order_date": "2026-05-22 10:16",
+    "creation_date": "22.05.2026",
+    "event_date": "23.05.2026",
+    "type": "cremation",
+    "customer_name": "ГРЫЗЛОВ",
+    "customer_phone": "89531814281",
+    "deceased": "ГРЫЗЛОВ ВАЛЕРИЙ ДМИТРИЕВИЧ",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall"
+    ]
   }
 ]
