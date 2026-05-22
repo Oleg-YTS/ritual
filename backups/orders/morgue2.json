@@ -252,5 +252,18 @@
     "phone": "89651553292",
     "temple": "ВЕНЕВ ИОАНА ПРЕДТЕЧИ, 7-А",
     "cemetery": "С. КАРПОВО (ВЕН. Р-ОН)"
+  },
+  {
+    "order_date": "2026-05-22 06:33",
+    "creation_date": "22.05.2026",
+    "event_date": "23.05.2026",
+    "type": "funeral",
+    "customer_name": "ЖЕЛТОВ ВАДИМ",
+    "customer_phone": "89632284222",
+    "deceased": "ЖЕЛТОВ",
+    "morgue_location": "Мира 11",
+    "phone": "89632284222",
+    "temple": "-",
+    "cemetery": "БЫЧАТНИК"
   }
 ]
