@@ -1067,6 +1067,15 @@
       "end_time": "2026-05-22T08:57:25.831612",
       "closed_by": 8656668852,
       "closed_by_name": "Unknown"
+    },
+    {
+      "shift_id": "shift_20260523_073306",
+      "start_time": "2026-05-23T07:33:06.388663",
+      "opened_by": 747600306,
+      "opened_by_name": "Евсеев",
+      "bodies": [],
+      "orders": [],
+      "closed": false
     }
   ],
   "orders": []
