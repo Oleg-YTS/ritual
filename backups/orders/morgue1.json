@@ -41,5 +41,20 @@
     "extras": [
       "hall"
     ]
+  },
+  {
+    "order_date": "2026-05-23 09:25",
+    "creation_date": "23.05.2026",
+    "event_date": "24.05.2026",
+    "type": "cremation",
+    "customer_name": "СВИРИДОВА",
+    "customer_phone": "89531814281",
+    "deceased": "СУХОДОЛОВА МАРГАРИТА НИКОЛАЕВНА",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "СЕМАШКО",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": []
   }
 ]
