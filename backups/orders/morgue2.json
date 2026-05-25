@@ -265,5 +265,22 @@
     "phone": "89632284222",
     "temple": "-",
     "cemetery": "БЫЧАТНИК"
+  },
+  {
+    "order_date": "2026-05-25 09:38",
+    "creation_date": "25.05.2026",
+    "event_date": "27.05.2026",
+    "type": "cremation",
+    "customer_name": "БЕЛОЗЕРОВА ЕВГЕНИЯ",
+    "customer_phone": "89534232369",
+    "deceased": "БОЧАРОВА ТАМАРА ИВАНОВНА",
+    "morgue_location": "Мира 11",
+    "phone": "89534232369",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall_blessing"
+    ]
   }
 ]
