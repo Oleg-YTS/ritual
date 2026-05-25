@@ -282,5 +282,22 @@
     "extras": [
       "hall_blessing"
     ]
+  },
+  {
+    "order_date": "2026-05-25 09:56",
+    "creation_date": "25.05.2026",
+    "event_date": "27.05.2026",
+    "type": "cremation",
+    "customer_name": "АБРАМОВ ВЛАДИМИР",
+    "customer_phone": "8 (901) 998-33-52",
+    "deceased": "АБРАМОВА НАИЛЯ ГАЛИАСКАРОВНА",
+    "morgue_location": "Мира 11",
+    "phone": "8 (901) 998-33-52",
+    "temple": "КРЕМАТОРИЙ",
+    "cemetery": "",
+    "urn": "Пластик (Белый)",
+    "extras": [
+      "short_farewell"
+    ]
   }
 ]
