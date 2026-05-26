@@ -1239,7 +1239,10 @@
           "cemetery": "ОСИНОВАЯ ГОРА"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-26T10:56:03.763155",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
