@@ -1257,6 +1257,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ШИБАЛОВА",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
