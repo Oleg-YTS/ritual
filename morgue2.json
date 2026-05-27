@@ -1271,8 +1271,9 @@
           "type": "std",
           "source": "amb",
           "paid": false,
-          "removed": false,
-          "organization": ""
+          "removed": true,
+          "organization": "",
+          "removed_reason": "БСМЭ"
         }
       ],
       "orders": [],
