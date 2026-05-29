@@ -56,5 +56,22 @@
     "cemetery": "",
     "urn": "Вечная память",
     "extras": []
+  },
+  {
+    "order_date": "2026-05-29 11:11",
+    "creation_date": "29.05.2026",
+    "event_date": "30.05.2026",
+    "type": "cremation",
+    "customer_name": "ЕВСЕЕВ А В",
+    "customer_phone": "89531814281",
+    "deceased": "ЕВСЕЕВА ТАТЬЯНА АНАТОЛЬЕВНА",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "СЕМАШКО",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "polished_coffin"
+    ]
   }
 ]
