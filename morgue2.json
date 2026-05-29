@@ -1342,7 +1342,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-05-29 06:20",
+          "creation_date": "29.05.2026",
+          "event_date": "31.05.2026",
+          "type": "funeral",
+          "customer_name": "ПЕРЕВЕЗЕНЦЕВА ВЕРОНИКА",
+          "customer_phone": "89029016986",
+          "deceased": "ПЕРЕВЕЗЕНЦЕВА З П",
+          "morgue_location": "Мира 11",
+          "phone": "89029016986",
+          "temple": "СЕМАШКО",
+          "cemetery": "3-Е (П/Х)"
+        }
+      ],
       "closed": false
     }
   ],
