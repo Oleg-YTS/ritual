@@ -1357,7 +1357,10 @@
           "cemetery": "3-Е (П/Х)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-05-29T11:12:14.997648",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
