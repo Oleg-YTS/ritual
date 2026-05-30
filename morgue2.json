@@ -1401,7 +1401,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-05-30 09:26",
+          "creation_date": "30.05.2026",
+          "event_date": "01.06.2026",
+          "type": "funeral",
+          "customer_name": "САВИН ЕВГЕНИЙ",
+          "customer_phone": "89038403422",
+          "deceased": "САВИН В В",
+          "morgue_location": "Мира 11",
+          "phone": "89038403422",
+          "temple": "АЛ. НЕВСКОГО",
+          "cemetery": "1-Е (П/Х)"
+        }
+      ],
       "closed": false
     }
   ],
