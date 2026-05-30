@@ -1391,6 +1391,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "МИШУКОВА",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
