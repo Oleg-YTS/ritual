@@ -1452,7 +1452,7 @@
           "surname": "СТРЕКОПЫТОВА",
           "type": "std",
           "source": "amb",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
