@@ -73,5 +73,22 @@
     "extras": [
       "polished_coffin"
     ]
+  },
+  {
+    "order_date": "2026-06-02 06:12",
+    "creation_date": "02.06.2026",
+    "event_date": "03.06.2026",
+    "type": "cremation",
+    "customer_name": "МАТВЕЕВ С В",
+    "customer_phone": "89531814281",
+    "deceased": "МАТВЕЕВ ВЛАДИМИР ГЕОРГИЕВИЧ",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "СЕМАШКО",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "urgent"
+    ]
   }
 ]
