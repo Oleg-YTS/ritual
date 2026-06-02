@@ -1488,7 +1488,10 @@
           "cemetery": "1-Е (П/Х)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-06-02T07:05:58.068012",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
