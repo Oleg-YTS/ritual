@@ -1463,6 +1463,14 @@
           "paid": true,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ИСАЕВА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [
