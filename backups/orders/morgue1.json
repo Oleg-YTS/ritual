@@ -90,5 +90,20 @@
     "extras": [
       "urgent"
     ]
+  },
+  {
+    "order_date": "2026-06-04 09:10",
+    "creation_date": "04.06.2026",
+    "event_date": "05.06.2026",
+    "type": "cremation",
+    "customer_name": "СЕМИНА МАРИЯ",
+    "customer_phone": "89531814281",
+    "deceased": "ДОРОНКИН ВЛАДИМИР ВЛАДИМИРОВИЧ",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "СЕМАШКО",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": []
   }
 ]
