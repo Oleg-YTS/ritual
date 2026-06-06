@@ -1573,6 +1573,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ПЛЕШИНА",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
