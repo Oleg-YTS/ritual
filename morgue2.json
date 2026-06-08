@@ -1618,6 +1618,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ПЯТИКОПОВ",
+          "type": "nstd",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
