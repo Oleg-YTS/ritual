@@ -338,5 +338,18 @@
     "phone": "89038403422",
     "temple": "АЛ. НЕВСКОГО",
     "cemetery": "1-Е (П/Х)"
+  },
+  {
+    "order_date": "2026-06-12 06:24",
+    "creation_date": "12.06.2026",
+    "event_date": "12.06.2026",
+    "type": "funeral",
+    "customer_name": "ЗАХАРОВА ЛИДИЯ",
+    "customer_phone": "89632266676",
+    "deceased": "БАРЫМОВА Н Т",
+    "morgue_location": "Мира 11",
+    "phone": "89632266676",
+    "temple": "СЕМАШКО",
+    "cemetery": "СУДАКОВО (НОВ)"
   }
 ]
