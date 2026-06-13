@@ -1790,7 +1790,10 @@
           "cemetery": "ЖЕЛЫБИНО"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-06-13T08:34:40.239449",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
