@@ -1730,8 +1730,9 @@
           "type": "std",
           "source": "stat",
           "paid": false,
-          "removed": false,
-          "organization": ""
+          "removed": true,
+          "organization": "",
+          "removed_reason": "Ошибочно"
         },
         {
           "surname": "КОНУШКИНА",
