@@ -1775,7 +1775,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-06-13 08:30",
+          "creation_date": "13.06.2026",
+          "event_date": "16.06.2026",
+          "type": "funeral",
+          "customer_name": "САЗОНОВА СВЕТЛАНА",
+          "customer_phone": "89531842882",
+          "deceased": "ЗАХАРОВА Т Г",
+          "morgue_location": "Мира 11",
+          "phone": "89531842882",
+          "temple": "РЕВЯКИНО",
+          "cemetery": "ЖЕЛЫБИНО"
+        }
+      ],
       "closed": false
     }
   ],
