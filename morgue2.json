@@ -1853,7 +1853,7 @@
           "surname": "АКИМОВ",
           "type": "std",
           "source": "stat",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
