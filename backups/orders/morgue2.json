@@ -364,5 +364,18 @@
     "phone": "89531842882",
     "temple": "РЕВЯКИНО",
     "cemetery": "ЖЕЛЫБИНО"
+  },
+  {
+    "order_date": "2026-06-16 05:22",
+    "creation_date": "16.06.2026",
+    "event_date": "17.06.2026",
+    "type": "funeral",
+    "customer_name": "АКИМОВА ЕЛЕНА",
+    "customer_phone": "89036594004",
+    "deceased": "АКИМОВ В И",
+    "morgue_location": "Мира 11",
+    "phone": "89036594004",
+    "temple": "НЕТ",
+    "cemetery": "4-Е (21УЧ)"
   }
 ]
