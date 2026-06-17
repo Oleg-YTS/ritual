@@ -390,5 +390,22 @@
     "phone": "89066229730",
     "temple": "ГОРЕЛКИ",
     "cemetery": "ГОРЕЛЬСКОЕ 14:00"
+  },
+  {
+    "order_date": "2026-06-17 16:30",
+    "creation_date": "17.06.2026",
+    "event_date": "19.06.2026",
+    "type": "cremation",
+    "customer_name": "МОРЕНОВА АЛЛА",
+    "customer_phone": "89611053795",
+    "deceased": "СИНИЦЫН ВИКТОР ЛУКИЧ",
+    "morgue_location": "Мира 11",
+    "phone": "89611053795",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall_blessing"
+    ]
   }
 ]
