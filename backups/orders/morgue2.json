@@ -377,5 +377,18 @@
     "phone": "89036594004",
     "temple": "НЕТ",
     "cemetery": "4-Е (21УЧ)"
+  },
+  {
+    "order_date": "2026-06-17 16:28",
+    "creation_date": "17.06.2026",
+    "event_date": "18.06.2026",
+    "type": "funeral",
+    "customer_name": "ДУБИНИН БОРИС ВЛАДИМИРОВИЧ",
+    "customer_phone": "89066229730",
+    "deceased": "ДУБИНИНА Н М",
+    "morgue_location": "Мира 11",
+    "phone": "89066229730",
+    "temple": "ГОРЕЛКИ",
+    "cemetery": "ГОРЕЛЬСКОЕ 14:00"
   }
 ]
