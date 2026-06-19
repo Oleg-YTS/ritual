@@ -2010,7 +2010,10 @@
           "cemetery": "2-Е П/Х"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-06-19T11:58:54.755762",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
