@@ -1995,7 +1995,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-06-19 07:51",
+          "creation_date": "19.06.2026",
+          "event_date": "21.06.2026",
+          "type": "funeral",
+          "customer_name": "АЛДОШИН ИГОРЬ ВАСИЛЬЕВИЧ",
+          "customer_phone": "89534250581",
+          "deceased": "АЛДОШИНА А С",
+          "morgue_location": "Мира 11",
+          "phone": "89534250581",
+          "temple": "ПРЯМОЙ",
+          "cemetery": "2-Е П/Х"
+        }
+      ],
       "closed": false
     }
   ],
