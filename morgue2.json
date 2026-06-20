@@ -2033,7 +2033,7 @@
           "surname": "ТЕЛЬМАШОВ",
           "type": "std",
           "source": "stat",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
