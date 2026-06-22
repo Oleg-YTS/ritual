@@ -2086,7 +2086,7 @@
           "surname": "МАЗУРОВА",
           "type": "std",
           "source": "amb",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         }
