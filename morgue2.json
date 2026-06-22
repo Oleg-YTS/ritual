@@ -2062,7 +2062,7 @@
           "surname": "ЖАВОРОНКОВА",
           "type": "std",
           "source": "stat",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
@@ -2070,7 +2070,7 @@
           "surname": "ГУДКОВА",
           "type": "std",
           "source": "amb",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
