@@ -2089,6 +2089,14 @@
           "paid": true,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "БУНАКОВА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
