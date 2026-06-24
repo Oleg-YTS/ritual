@@ -2136,7 +2136,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-06-24 15:47",
+          "creation_date": "24.06.2026",
+          "event_date": "26.06.2026",
+          "type": "funeral",
+          "customer_name": "РАДЮКИН ЕВГЕНИЙ АЛЕКСЕЕВИЧ",
+          "customer_phone": "89164747005",
+          "deceased": "РАДЮКИН А И",
+          "morgue_location": "Мира 11",
+          "phone": "89164747005",
+          "temple": "П ЕПИФАНЬ В 11:00",
+          "cemetery": "П ЕПИФАНЬ"
+        }
+      ],
       "closed": false
     }
   ],
