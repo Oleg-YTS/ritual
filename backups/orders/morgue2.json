@@ -433,5 +433,18 @@
     "phone": "89164747005",
     "temple": "П ЕПИФАНЬ В 11:00",
     "cemetery": "П ЕПИФАНЬ"
+  },
+  {
+    "order_date": "2026-06-25 09:48",
+    "creation_date": "25.06.2026",
+    "event_date": "27.06.2026",
+    "type": "funeral",
+    "customer_name": "КУЛАГИН ОЛЕГ ВАСИЛЬЕВИЧ",
+    "customer_phone": "89606186407",
+    "deceased": "КУЛАГИНА Р К",
+    "morgue_location": "Мира 11",
+    "phone": "89606186407",
+    "temple": "12 АПОСТОЛОВ",
+    "cemetery": "1-Е(П/Х)"
   }
 ]
