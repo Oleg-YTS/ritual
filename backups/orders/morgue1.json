@@ -120,5 +120,22 @@
     "cemetery": "",
     "urn": "Вечная память",
     "extras": []
+  },
+  {
+    "order_date": "2026-06-26 11:38",
+    "creation_date": "26.06.2026",
+    "event_date": "27.06.2026",
+    "type": "cremation",
+    "customer_name": "ГНИДИНА ТАТЬЯНА",
+    "customer_phone": "89531814281",
+    "deceased": "ГНИДИНА НИНА КОНСТАНТИНОВНА",
+    "morgue_location": "Первомайская 13",
+    "phone": "89531814281",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "hall"
+    ]
   }
 ]
