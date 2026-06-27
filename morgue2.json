@@ -2278,7 +2278,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-06-27 05:13",
+          "creation_date": "27.06.2026",
+          "event_date": "28.06.2026",
+          "type": "funeral",
+          "customer_name": "ФЕОКТИСТОВ ОЛЕГ ЮРЬЕВИЧ",
+          "customer_phone": "89109401656",
+          "deceased": "ФЕОКТИСТОВА Н А",
+          "morgue_location": "Мира 11",
+          "phone": "89109401656",
+          "temple": "12 АПОСТОЛОВ",
+          "cemetery": "1-Е(П/Х)"
+        }
+      ],
       "closed": false
     }
   ],
