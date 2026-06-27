@@ -459,5 +459,18 @@
     "phone": "89109401656",
     "temple": "12 АПОСТОЛОВ",
     "cemetery": "1-Е(П/Х)"
+  },
+  {
+    "order_date": "2026-06-27 10:48",
+    "creation_date": "27.06.2026",
+    "event_date": "28.06.2026",
+    "type": "funeral",
+    "customer_name": "ДЕНИСОВА НАТАЛЬЯ АНАТОЛЬЕВНА",
+    "customer_phone": "89032382463",
+    "deceased": "АГАПОВА В А",
+    "morgue_location": "Мира 11",
+    "phone": "89032382463",
+    "temple": "ИЛЬИНСКАЯ 1-Я, 120",
+    "cemetery": "ИЛЬИНСКАЯ(БАРЫКОВО)"
   }
 ]
