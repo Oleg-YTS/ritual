@@ -2332,7 +2332,16 @@
       "start_time": "2026-06-29T07:49:25.308263",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "ЧИРКИНА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
