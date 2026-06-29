@@ -2322,7 +2322,10 @@
           "cemetery": "ИЛЬИНСКАЯ(БАРЫКОВО)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-06-29T07:49:03.483052",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
