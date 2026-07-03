@@ -2449,6 +2449,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "НИКИТИНА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
