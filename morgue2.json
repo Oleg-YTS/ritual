@@ -2496,7 +2496,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-07-04 07:31",
+          "creation_date": "04.07.2026",
+          "event_date": "05.07.2026",
+          "type": "funeral",
+          "customer_name": "ПРЯХИНА НАТАЛЬЯ АНАТОЛЬЕВНА",
+          "customer_phone": "89509245114",
+          "deceased": "НИКИТИНА Г И",
+          "morgue_location": "Мира 11",
+          "phone": "89509245114",
+          "temple": "УЗЛОВАЯ(АДРЕС) 09:00",
+          "cemetery": "СУПОНЬ 11:00"
+        }
+      ],
       "closed": false
     }
   ],
