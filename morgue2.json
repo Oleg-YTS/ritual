@@ -2653,7 +2653,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-07-14 12:26",
+          "creation_date": "14.07.2026",
+          "event_date": "16.07.2026",
+          "type": "funeral",
+          "customer_name": "КИРЬЯНОВ КИРИЛЛ",
+          "customer_phone": "89207466877",
+          "deceased": "БУЛАТОВ Н Н",
+          "morgue_location": "Мира 11",
+          "phone": "89207466877",
+          "temple": "12 АПОСТОЛОВ В 11:00",
+          "cemetery": "5-Е (НОВОЕ)"
+        }
+      ],
       "closed": false
     }
   ],
