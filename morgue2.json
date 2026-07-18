@@ -2651,6 +2651,14 @@
           "paid": true,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ПОДШИБЯКИНА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [
