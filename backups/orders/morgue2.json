@@ -515,5 +515,18 @@
     "extras": [
       "polished_coffin"
     ]
+  },
+  {
+    "order_date": "2026-07-18 05:38",
+    "creation_date": "18.07.2026",
+    "event_date": "19.07.2026",
+    "type": "funeral",
+    "customer_name": "АРТАСОВ ДМИТРИЙ",
+    "customer_phone": "89157872532",
+    "deceased": "АРТАСОВА Н В",
+    "morgue_location": "Мира 11",
+    "phone": "89157872532",
+    "temple": "ГОРЕЛКИ",
+    "cemetery": "ГОРЕЛКИ(П/Х) 11:00"
   }
 ]
