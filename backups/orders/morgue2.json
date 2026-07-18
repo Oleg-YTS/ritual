@@ -528,5 +528,23 @@
     "phone": "89157872532",
     "temple": "ГОРЕЛКИ",
     "cemetery": "ГОРЕЛКИ(П/Х) 11:00"
+  },
+  {
+    "order_date": "2026-07-18 05:44",
+    "creation_date": "18.07.2026",
+    "event_date": "21.07.2026",
+    "type": "cremation",
+    "customer_name": "КАЛЯЧАЙВЫРГИНА ОЛЬГА",
+    "customer_phone": "89246670012",
+    "deceased": "КАЛЯЧАЙВЫРГИНА ТАТЬЯНА ВАСИЛЬЕВНА",
+    "morgue_location": "Мира 11",
+    "phone": "89246670012",
+    "temple": "Зал отпевания",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "large_body",
+      "hall_blessing"
+    ]
   }
 ]
