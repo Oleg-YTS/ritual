@@ -2756,7 +2756,7 @@
           "surname": "СИДОРОВ",
           "type": "std",
           "source": "amb",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
