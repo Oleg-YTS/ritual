@@ -546,5 +546,20 @@
       "large_body",
       "hall_blessing"
     ]
+  },
+  {
+    "order_date": "2026-07-22 08:56",
+    "creation_date": "22.07.2026",
+    "event_date": "23.07.2026",
+    "type": "cremation",
+    "customer_name": "ЕВСЕЕВ О В",
+    "customer_phone": "89531814281",
+    "deceased": "ВАГАНОВА ВАЛЕНТИНА ИВАНОВНА",
+    "morgue_location": "ГЛИНКИ",
+    "phone": "89531814281",
+    "temple": "СЕМАШКО",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": []
   }
 ]
