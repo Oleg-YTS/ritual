@@ -2913,6 +2913,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "ВОЛОДИНА",
+          "type": "std",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
