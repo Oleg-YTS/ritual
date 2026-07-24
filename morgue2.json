@@ -2973,6 +2973,19 @@
           "phone": "89509070076",
           "temple": "АРСЕНАЛЬНАЯ 5(НОЧЬ)",
           "cemetery": "БАРЫКОВО В 11:30"
+        },
+        {
+          "order_date": "2026-07-24 08:24",
+          "creation_date": "24.07.2026",
+          "event_date": "25.07.2026",
+          "type": "funeral",
+          "customer_name": "КОНДРАТЬЕВА ИРИНА АЛЕКСАНДРОВНА",
+          "customer_phone": "89531915939",
+          "deceased": "ЗОЛОТАРЕВА М Д",
+          "morgue_location": "Мира 11",
+          "phone": "89531915939",
+          "temple": "ДЕДИЛОВО",
+          "cemetery": "КИРЕЕВСК(ГОРОД)"
         }
       ],
       "closed": false
