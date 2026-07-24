@@ -561,5 +561,18 @@
     "cemetery": "",
     "urn": "Вечная память",
     "extras": []
+  },
+  {
+    "order_date": "2026-07-24 08:19",
+    "creation_date": "24.07.2026",
+    "event_date": "25.07.2026",
+    "type": "funeral",
+    "customer_name": "ШАМАРИНА СВЕТЛАНА",
+    "customer_phone": "89509070076",
+    "deceased": "БОРОДИНА Л Н",
+    "morgue_location": "Мира 11",
+    "phone": "89509070076",
+    "temple": "АРСЕНАЛЬНАЯ 5(НОЧЬ)",
+    "cemetery": "БАРЫКОВО В 11:30"
   }
 ]
