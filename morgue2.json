@@ -2988,7 +2988,10 @@
           "cemetery": "КИРЕЕВСК(ГОРОД)"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-07-25T06:02:36.568330",
+      "closed_by": 8656668852,
+      "closed_by_name": "Unknown"
     }
   ],
   "orders": []
