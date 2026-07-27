@@ -587,5 +587,22 @@
     "phone": "89531915939",
     "temple": "ДЕДИЛОВО",
     "cemetery": "КИРЕЕВСК(ГОРОД)"
+  },
+  {
+    "order_date": "2026-07-27 05:38",
+    "creation_date": "27.07.2026",
+    "event_date": "26.07.2026",
+    "type": "cremation",
+    "customer_name": "ЕВСЕЕВ ОЛЕГ",
+    "customer_phone": "89531814281",
+    "deceased": "НЕКИПЕЛОВА ВАЛЕНТИНА НИКОЛАЕВНА",
+    "morgue_location": "Мира 11",
+    "phone": "89531814281",
+    "temple": "12 АПОСТОЛОВ",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "large_body"
+    ]
   }
 ]
