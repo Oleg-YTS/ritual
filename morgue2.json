@@ -3088,7 +3088,7 @@
           "surname": "ЖУЧКОВ",
           "type": "std",
           "source": "stat",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
