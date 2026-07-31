@@ -3132,7 +3132,10 @@
           "cemetery": "5-Е ВОИНСКОЕ"
         }
       ],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-07-31T06:52:14.071622",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
