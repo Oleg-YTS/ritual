@@ -3048,7 +3048,7 @@
           "surname": "САВАРИНА",
           "type": "std",
           "source": "stat",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
