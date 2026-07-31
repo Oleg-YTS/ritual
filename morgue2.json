@@ -3117,7 +3117,21 @@
           "organization": ""
         }
       ],
-      "orders": [],
+      "orders": [
+        {
+          "order_date": "2026-07-31 06:49",
+          "creation_date": "31.07.2026",
+          "event_date": "01.08.2026",
+          "type": "funeral",
+          "customer_name": "ТОКАРЕВ АЛЕКСАНДР ВИКТОРОВИЧ",
+          "customer_phone": "89190768789",
+          "deceased": "ТОКАРЕВ В В",
+          "morgue_location": "Мира 11",
+          "phone": "89190768789",
+          "temple": "12 АПОСТОЛОВ 10:00",
+          "cemetery": "5-Е ВОИНСКОЕ"
+        }
+      ],
       "closed": false
     }
   ],
