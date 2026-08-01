@@ -617,5 +617,22 @@
     "phone": "89190768789",
     "temple": "12 АПОСТОЛОВ 10:00",
     "cemetery": "5-Е ВОИНСКОЕ"
+  },
+  {
+    "order_date": "2026-08-01 09:31",
+    "creation_date": "01.08.2026",
+    "event_date": "02.08.2026",
+    "type": "cremation",
+    "customer_name": "ЕВСЕЕВ О В",
+    "customer_phone": "89534203533",
+    "deceased": "ЖИЖИНА ЛИДИЯ АЛЕКСЕЕВНА",
+    "morgue_location": "Мира 11",
+    "phone": "89534203533",
+    "temple": "МОРГ(12:00)",
+    "cemetery": "",
+    "urn": "Вечная память",
+    "extras": [
+      "short_farewell"
+    ]
   }
 ]
