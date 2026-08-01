@@ -634,5 +634,18 @@
     "extras": [
       "short_farewell"
     ]
+  },
+  {
+    "order_date": "2026-08-01 09:37",
+    "creation_date": "01.08.2026",
+    "event_date": "03.08.2026",
+    "type": "funeral",
+    "customer_name": "ЧИНЕНОВ БОРИС АЛЕКСАНДРОВИЧ",
+    "customer_phone": "89534363592",
+    "deceased": "ЧИНЕНОВА ЛЮДМИЛА АЛЕКСАНДРОВНА",
+    "morgue_location": "Мира 11",
+    "phone": "89534363592",
+    "temple": "ПРЯМОЙ",
+    "cemetery": "5-Е НОВОЕ"
   }
 ]
