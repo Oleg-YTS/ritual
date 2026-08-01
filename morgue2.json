@@ -3147,7 +3147,7 @@
           "surname": "ЖИЖИНА",
           "type": "std",
           "source": "stat",
-          "paid": true,
+          "paid": false,
           "removed": false,
           "organization": ""
         },
@@ -3155,7 +3155,7 @@
           "surname": "ЧИНЕНОВА",
           "type": "std",
           "source": "stat",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
