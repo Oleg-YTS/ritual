@@ -3158,6 +3158,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "МУХИНА",
+          "type": "std",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
