@@ -660,5 +660,18 @@
     "phone": "89105535444",
     "temple": "АЛЕШНЯ",
     "cemetery": "АЛЕШНЯ"
+  },
+  {
+    "order_date": "2026-08-20 07:07",
+    "creation_date": "20.08.2026",
+    "event_date": "21.08.2026",
+    "type": "funeral",
+    "customer_name": "НИКИТИНА ТАТЬЯНА КОНСТАНТИНОВНА",
+    "customer_phone": "89105898397",
+    "deceased": "НИКИТИНА Н В",
+    "morgue_location": "Мира 11",
+    "phone": "89105898397",
+    "temple": "ДМ СОЛУНСКОГО 10:30",
+    "cemetery": "ТОРХОВО 11:30"
   }
 ]
