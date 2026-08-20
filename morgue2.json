@@ -3419,6 +3419,14 @@
           "paid": false,
           "removed": false,
           "organization": ""
+        },
+        {
+          "surname": "МИГАЛИН",
+          "type": "nstd",
+          "source": "stat",
+          "paid": false,
+          "removed": false,
+          "organization": ""
         }
       ],
       "orders": [],
