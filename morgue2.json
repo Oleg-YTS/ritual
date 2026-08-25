@@ -3585,7 +3585,10 @@
         }
       ],
       "orders": [],
-      "closed": false
+      "closed": true,
+      "end_time": "2026-08-25T07:02:37.306465",
+      "closed_by": 747600306,
+      "closed_by_name": "Евсеев"
     }
   ],
   "orders": []
