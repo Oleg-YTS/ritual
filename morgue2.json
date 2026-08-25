@@ -3502,7 +3502,16 @@
       "start_time": "2026-08-25T06:58:18.655832",
       "opened_by": 747600306,
       "opened_by_name": "Евсеев",
-      "bodies": [],
+      "bodies": [
+        {
+          "surname": "СЕНОПАЛЬНИКОВ",
+          "type": "nstd",
+          "source": "amb",
+          "paid": false,
+          "removed": false,
+          "organization": ""
+        }
+      ],
       "orders": [],
       "closed": false
     }
