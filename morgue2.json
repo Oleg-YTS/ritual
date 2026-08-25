@@ -3507,7 +3507,7 @@
           "surname": "СЕНОПАЛЬНИКОВ",
           "type": "nstd",
           "source": "amb",
-          "paid": false,
+          "paid": true,
           "removed": false,
           "organization": ""
         },
