@@ -673,5 +673,18 @@
     "phone": "89105898397",
     "temple": "ДМ СОЛУНСКОГО 10:30",
     "cemetery": "ТОРХОВО 11:30"
+  },
+  {
+    "order_date": "2026-09-02 10:35",
+    "creation_date": "02.09.2026",
+    "event_date": "03.09.2026",
+    "type": "funeral",
+    "customer_name": "МОНАХОВ НИКОЛАЙ АЛЕКСАНДРОВИЧ",
+    "customer_phone": "89066222673",
+    "deceased": "МОНАХОВА Н С",
+    "morgue_location": "Мира 11",
+    "phone": "89066222673",
+    "temple": "АРСЕНАЛЬНАЯ 5 11:00",
+    "cemetery": "1-Е П/Х"
   }
 ]
